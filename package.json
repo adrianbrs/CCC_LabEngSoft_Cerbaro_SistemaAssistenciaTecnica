@@ -1,0 +1,20 @@
+{
+  "name": "musat-upf",
+  "version": "1.0.0",
+  "description": "Projeto educacional de um Sistema para Assistência Técnica",
+  "main": "dist/server.js",
+  "scripts": {
+    "start:prod": "node dist/backend/server.js"
+  },
+  "keywords": [],
+  "contributors": [
+    "Adrian Cerbaro <178304@upf.br>",
+    "Giovanni Assonalio Cerbaro <155097@upf.br>"
+  ],
+  "license": "MIT",
+  "packageManager": "pnpm@10.6.5",
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "^5.8.3"
+  }
+}
