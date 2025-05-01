@@ -1,10 +1,12 @@
 {
-  "name": "musat-upf",
-  "version": "1.0.0",
+  "name": "@musat/workspace",
+  "version": "0.0.1",
   "description": "Projeto educacional de um Sistema para Assistência Técnica",
   "main": "dist/server.js",
   "scripts": {
-    "start:prod": "node dist/backend/server.js"
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "api": "pnpm --filter @musat/api"
   },
   "keywords": [],
   "contributors": [
@@ -15,6 +17,8 @@
   "packageManager": "pnpm@10.6.5",
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "turbo": "^2.5.2",
+    "type-fest": "^4.40.1",
     "typescript": "^5.8.3"
   }
 }
