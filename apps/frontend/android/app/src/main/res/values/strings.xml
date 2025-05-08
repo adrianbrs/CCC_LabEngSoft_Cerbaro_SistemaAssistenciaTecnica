@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Musat Assistencia Técnica</string>
+    <string name="title_activity_main">Musat Assistencia Técnica</string>
+    <string name="package_name">dev.cerbaro.musat</string>
+    <string name="custom_url_scheme">dev.cerbaro.musat</string>
+</resources>

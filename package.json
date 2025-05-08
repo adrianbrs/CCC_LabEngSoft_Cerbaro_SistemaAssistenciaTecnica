@@ -6,7 +6,9 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "api": "pnpm --filter @musat/api"
+    "api": "pnpm --filter @musat/api",
+    "frontend": "pnpm --filter @musat/frontend",
+    "frontend:cap": "pnpm frontend exec cap"
   },
   "keywords": [],
   "contributors": [
