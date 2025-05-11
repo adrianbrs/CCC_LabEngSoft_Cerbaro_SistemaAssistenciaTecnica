@@ -22,5 +22,20 @@
     "turbo": "^2.5.2",
     "type-fest": "^4.40.1",
     "typescript": "^5.8.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@swc/core",
+      "bcrypt",
+      "esbuild",
+      "sharp",
+      "vue-demi"
+    ],
+    "ignoredBuiltDependencies": [
+      "@parcel/watcher",
+      "@scarf/scarf",
+      "unrs-resolver"
+    ]
   }
 }
