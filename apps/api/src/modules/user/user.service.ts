@@ -8,6 +8,8 @@ import { Address } from './models/address.entity';
 import { UserRole } from '@musat/core';
 import { DataSource } from 'typeorm';
 import { generateHexToken } from '@/shared/utils';
+import { FRONTEND_URL } from '@/constants/env';
+import { Config } from '@/constants/config';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 
@@ -36,8 +38,7 @@ export class UserService {
       throw new MissingVerificationTokenError();
     }
 
-    // FIXME: Get this URL from the frontend package
-    const url = new URL('/users/verify', 'http://localhost:3001');
+    const url = new URL(Config.frontend.accountVerificationPath, FRONTEND_URL);
     url.searchParams.set('user', user.id);
     url.searchParams.set('token', user.verificationToken);
 
@@ -54,12 +55,20 @@ export class UserService {
     this.logger.log('Registering new user');
 
     return this.ds.transaction(async (manager) => {
-      const address = Address.create({
-        ...userDto.address,
-      });
+      const {
+        address: addressData,
+        password: rawPassword,
+        ...userData
+      } = userDto;
+
+      // Hash user password
+      const password = await User.hashPassword(rawPassword);
+
+      const address = Address.create({ ...addressData });
       const user = User.create({
-        ...userDto,
+        ...userData,
         address,
+        password,
         role: UserRole.CLIENT,
         verificationToken: generateHexToken(VERIFICATION_TOKEN_LENGTH),
       });

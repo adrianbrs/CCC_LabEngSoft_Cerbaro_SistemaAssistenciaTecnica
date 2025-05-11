@@ -1,9 +1,12 @@
 import { CoreEntity } from '@/shared/core.entity';
 import { safeCompareStrings } from '@/shared/utils';
 import { IUserEntity, UserRole } from '@musat/core';
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, OneToOne } from 'typeorm';
 import { Address } from './address.entity';
 import { Exclude } from 'class-transformer';
+import { hash, compare } from 'bcrypt';
+
+const BCRYPT_SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10);
 
 @Entity()
 export class User extends CoreEntity implements IUserEntity {
@@ -13,11 +16,12 @@ export class User extends CoreEntity implements IUserEntity {
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
+  @Index({ unique: true })
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
   @Exclude()
-  @Column({ type: 'varchar', length: 60 })
+  @Column({ type: 'varchar', length: 60, select: false })
   password: string;
 
   @Column({
@@ -31,7 +35,7 @@ export class User extends CoreEntity implements IUserEntity {
   verifiedAt: Date | null;
 
   @Exclude()
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true, select: false })
   verificationToken: string | null;
 
   @Column({ type: 'varchar', length: 14, nullable: false })
@@ -45,7 +49,11 @@ export class User extends CoreEntity implements IUserEntity {
    * Verifies the user's email address using the provided token.
    */
   static async verify(userId: string, token: string): Promise<User | null> {
-    const user = await this.findOne({ where: { id: userId } });
+    const user = await this.createQueryBuilder()
+      .select('*')
+      .where('id = :id', { id: userId })
+      .getOne();
+
     if (user && user.verificationToken) {
       if (!safeCompareStrings(user.verificationToken, token)) {
         return null;
@@ -54,8 +62,56 @@ export class User extends CoreEntity implements IUserEntity {
       user.verifiedAt = new Date();
       user.verificationToken = null;
       await user.save();
-      return user;
+      return User.create({
+        ...user,
+        password: undefined,
+        verificationToken: undefined,
+      });
     }
     return null;
+  }
+
+  /**
+   * Finds a user by email and only returns the user if the password is correct.
+   */
+  static async findByEmailAndPassword(
+    email: string,
+    password: string,
+  ): Promise<User | null> {
+    const user = await this.createQueryBuilder()
+      .select('*')
+      .where('email = :email', { email })
+      .getOne();
+
+    if (!user) {
+      return null;
+    }
+
+    if (!(await this.comparePassword(password, user.password))) {
+      return null;
+    }
+
+    return User.create({
+      ...user,
+      password: undefined,
+      verificationToken: undefined,
+    });
+  }
+
+  /**
+   * Hash the password using bcrypt.
+   */
+  static async hashPassword(password: string | Buffer): Promise<string> {
+    return hash(password, BCRYPT_SALT_ROUNDS);
+  }
+
+  /**
+   * Compare the provided password with the hashed password.
+   */
+  static async comparePassword(
+    password: string | Buffer,
+    hash: string,
+  ): Promise<boolean> {
+    return compare(password, hash);
   }
 }

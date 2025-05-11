@@ -8,6 +8,9 @@ declare global {
       VERSION: string;
       NODE_ENV: 'development' | 'production' | 'test';
 
+      // FRONTEND
+      FRONTEND_URL: string;
+
       // DATABASE
       DB_HOST: string;
       DB_PORT: string;
@@ -19,6 +22,9 @@ declare global {
       MAILGUN_DOMAIN: string;
       MAILGUN_FROM: string;
       MAILGUN_KEY: string;
+
+      // SECURITY
+      BCRYPT_SALT_ROUNDS: string;
     }
   }
 }
