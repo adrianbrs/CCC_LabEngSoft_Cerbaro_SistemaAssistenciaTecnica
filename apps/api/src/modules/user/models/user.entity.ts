@@ -1,16 +1,22 @@
 import { CoreEntity } from '@/shared/core.entity';
 import { safeCompareStrings } from '@/shared/utils';
 import { IUserEntity, UserRole } from '@musat/core';
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Address } from './address.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class User extends CoreEntity implements IUserEntity {
+  @Column({ type: 'varchar', length: 11, unique: true })
+  cpf: string;
+
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
   @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
+  @Exclude()
   @Column({ type: 'varchar', length: 60 })
   password: string;
 
@@ -24,8 +30,16 @@ export class User extends CoreEntity implements IUserEntity {
   @Column({ type: 'timestamp', nullable: true })
   verifiedAt: Date | null;
 
+  @Exclude()
   @Column({ type: 'varchar', length: 255, nullable: true })
   verificationToken: string | null;
+
+  @Column({ type: 'varchar', length: 14, nullable: false })
+  phone: string;
+
+  @OneToOne(() => Address)
+  @JoinColumn()
+  address: Address;
 
   /**
    * Verifies the user's email address using the provided token.

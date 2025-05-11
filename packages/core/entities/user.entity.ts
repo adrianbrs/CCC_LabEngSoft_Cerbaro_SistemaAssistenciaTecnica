@@ -1,3 +1,4 @@
+import { IAddressEntity } from "./address.entity";
 import { ICoreEntity } from "./core.entity";
 
 export enum UserRole {
@@ -11,6 +12,8 @@ export interface IUserEntity extends ICoreEntity {
   email: string;
   password?: string;
   role: UserRole;
+  phone: string;
   verifiedAt: Date | null;
   verificationToken: string | null;
+  address: IAddressEntity;
 }

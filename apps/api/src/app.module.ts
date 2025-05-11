@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
+import { ClassSerializerInterceptor, Module } from '@nestjs/common';
 import { UserModule } from './modules/user/user.module';
 import { ProductModule } from './modules/product/product.module';
 import { TicketModule } from './modules/ticket/ticket.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { IS_DEV } from './constants/env';
 import { MailgunModule } from './lib/mailgun';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -31,6 +32,15 @@ import { MailgunModule } from './lib/mailgun';
     ProductModule,
     TicketModule,
     MailgunModule,
+  ],
+  providers: [
+    // Global serializer interceptor
+    // https://docs.nestjs.com/techniques/serialization
+    // https://docs.nestjs.com/interceptors#binding-interceptors
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor,
+    },
   ],
 })
 export class AppModule {}
