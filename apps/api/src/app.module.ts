@@ -20,11 +20,11 @@ import { MailgunModule } from './lib/mailgun';
       autoLoadEntities: true,
     }),
     MailgunModule.forRoot({
-      domain: process.env.MAILGUN_DOMAIN!,
-      from: process.env.MAILGUN_FROM!,
+      domain: process.env.MAILGUN_DOMAIN,
+      from: process.env.MAILGUN_FROM,
       options: {
         username: 'api',
-        key: process.env.MAILGUN_KEY!,
+        key: process.env.MAILGUN_KEY,
       },
     }),
     UserModule,
