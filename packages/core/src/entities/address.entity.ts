@@ -7,6 +7,5 @@ export interface IAddressEntity extends ICoreEntity {
   neighborhood: string;
   complement: string | null;
   state: string;
-  country: string;
   zipCode: string;
 }

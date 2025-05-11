@@ -25,6 +25,8 @@ declare global {
 
       // SECURITY
       BCRYPT_SALT_ROUNDS: string;
+      SESSION_SECRET: string;
+      SESSION_NAME: string;
     }
   }
 }

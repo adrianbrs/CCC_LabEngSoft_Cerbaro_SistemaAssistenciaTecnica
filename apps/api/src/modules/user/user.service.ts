@@ -10,6 +10,8 @@ import { DataSource } from 'typeorm';
 import { generateHexToken } from '@/shared/utils';
 import { FRONTEND_URL } from '@/constants/env';
 import { Config } from '@/constants/config';
+import { InvalidCredentialsError } from './errors/invalid-credentials.error';
+import { AccountNotVerifiedError } from './errors/account-not-verified.error';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 
@@ -80,5 +82,25 @@ export class UserService {
 
       return user;
     });
+  }
+
+  async login(email: string, password: string): Promise<User> {
+    this.logger.log('User login attempt');
+
+    const user = await User.findByEmailAndPassword(email, password);
+
+    if (!user) {
+      this.logger.warn('Invalid credentials');
+      throw new InvalidCredentialsError();
+    }
+
+    if (!user.verifiedAt) {
+      this.logger.log(`User ${user.id} is not verified`);
+      throw new AccountNotVerifiedError();
+    }
+
+    this.logger.log(`User ${user.id} logged in`);
+
+    return user;
   }
 }

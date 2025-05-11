@@ -6,6 +6,7 @@ export class ApiError extends HttpException {
       {
         code,
         message,
+        statusCode,
       },
       statusCode,
     );

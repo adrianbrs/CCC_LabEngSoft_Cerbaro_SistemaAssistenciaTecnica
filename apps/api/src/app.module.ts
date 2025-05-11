@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { IS_DEV } from './constants/env';
 import { MailgunModule } from './lib/mailgun';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     ProductModule,
     TicketModule,
     MailgunModule,
+    AuthModule,
   ],
   providers: [
     // Global serializer interceptor

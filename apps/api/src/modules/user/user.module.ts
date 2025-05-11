@@ -9,5 +9,6 @@ import { Address } from './models/address.entity';
   imports: [TypeOrmModule.forFeature([User, Address])],
   controllers: [UserController],
   providers: [UserService],
+  exports: [UserService],
 })
 export class UserModule {}

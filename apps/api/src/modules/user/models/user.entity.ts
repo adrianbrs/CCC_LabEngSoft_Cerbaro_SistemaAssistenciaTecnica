@@ -5,8 +5,7 @@ import { Column, Entity, Index, JoinColumn, OneToOne } from 'typeorm';
 import { Address } from './address.entity';
 import { Exclude } from 'class-transformer';
 import { hash, compare } from 'bcrypt';
-
-const BCRYPT_SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10);
+import { BCRYPT_SALT_ROUNDS } from '@/constants/env';
 
 @Entity()
 export class User extends CoreEntity implements IUserEntity {
@@ -41,7 +40,7 @@ export class User extends CoreEntity implements IUserEntity {
   @Column({ type: 'varchar', length: 14, nullable: false })
   phone: string;
 
-  @OneToOne(() => Address)
+  @OneToOne(() => Address, { cascade: true })
   @JoinColumn()
   address: Address;
 
@@ -52,7 +51,8 @@ export class User extends CoreEntity implements IUserEntity {
     const user = await this.createQueryBuilder()
       .select('*')
       .where('id = :id', { id: userId })
-      .getOne();
+      .getRawOne()
+      .then((data: object) => User.create({ ...data }));
 
     if (user && user.verificationToken) {
       if (!safeCompareStrings(user.verificationToken, token)) {
@@ -78,10 +78,11 @@ export class User extends CoreEntity implements IUserEntity {
     email: string,
     password: string,
   ): Promise<User | null> {
-    const user = await this.createQueryBuilder()
+    const user = await this.createQueryBuilder('user')
       .select('*')
-      .where('email = :email', { email })
-      .getOne();
+      .where('user.email = :email', { email })
+      .getRawOne()
+      .then((data: object) => User.create({ ...data }));
 
     if (!user) {
       return null;

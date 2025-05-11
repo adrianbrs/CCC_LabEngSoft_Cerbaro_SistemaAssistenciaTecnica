@@ -22,9 +22,6 @@ export class Address extends CoreEntity implements IAddressEntity {
   @Column({ type: 'varchar', length: 2 })
   state: string;
 
-  @Column({ type: 'varchar', length: 64 })
-  country: string;
-
   @Column({ type: 'varchar', length: 8 })
   zipCode: string;
 }

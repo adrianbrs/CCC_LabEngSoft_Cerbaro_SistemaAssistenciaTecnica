@@ -1,4 +1,5 @@
 import { ICoreEntity } from '@musat/core';
+import { Exclude } from 'class-transformer';
 import {
   BaseEntity,
   CreateDateColumn,
@@ -17,6 +18,7 @@ export abstract class CoreEntity extends BaseEntity implements ICoreEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
+  @Exclude()
   @DeleteDateColumn()
   deletedAt: Date;
 }
