@@ -1,4 +1,4 @@
-import { timingSafeEqual } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 
 export const safeCompareStrings = (a: string, b: string): boolean => {
   if (a.length !== b.length) {
@@ -10,3 +10,6 @@ export const safeCompareStrings = (a: string, b: string): boolean => {
 
   return timingSafeEqual(aBuffer, bBuffer);
 };
+
+export const generateHexToken = (length: number): string =>
+  Buffer.from(randomBytes(length)).toString('hex');

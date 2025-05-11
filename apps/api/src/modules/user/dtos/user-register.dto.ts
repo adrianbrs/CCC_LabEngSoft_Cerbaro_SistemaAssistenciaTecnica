@@ -7,7 +7,7 @@ import {
 import { AddressDto } from './address.dto';
 import { Type } from 'class-transformer';
 
-export class UserDto {
+export class UserRegisterDto {
   @Length(11, 11)
   @IsNumberString()
   cpf: string;

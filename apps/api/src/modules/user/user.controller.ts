@@ -9,7 +9,7 @@ import {
 import { User } from './models/user.entity';
 import { AccountVerificationError } from './errors/account-verification.error';
 import { UserVerifyDto } from './dtos/user-verify.dto';
-import { UserDto } from './dtos/user.dto';
+import { UserRegisterDto } from './dtos/user-register.dto';
 import { UserService } from './user.service';
 
 @Controller('users')
@@ -33,7 +33,7 @@ export class UserController {
 
   @Post('/register')
   @HttpCode(201)
-  async register(@Body() userDto: UserDto) {
+  async register(@Body() userDto: UserRegisterDto) {
     return this.userService.register(userDto);
   }
 }

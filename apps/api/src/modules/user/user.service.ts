@@ -3,11 +3,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { User } from './models/user.entity';
 import { AccountAlreadyVerifiedError } from './errors/account-already-verified.error';
 import { MissingVerificationTokenError } from './errors/missing-verification-token.error';
-import { UserDto } from './dtos/user.dto';
+import { UserRegisterDto } from './dtos/user-register.dto';
 import { Address } from './models/address.entity';
 import { UserRole } from '@musat/core';
-import { randomBytes } from 'node:crypto';
 import { DataSource } from 'typeorm';
+import { generateHexToken } from '@/shared/utils';
+
+const VERIFICATION_TOKEN_LENGTH = 16;
 
 @Injectable()
 export class UserService {
@@ -48,31 +50,24 @@ export class UserService {
     });
   }
 
-  async register(userDto: UserDto): Promise<User> {
+  async register(userDto: UserRegisterDto): Promise<User> {
+    this.logger.log('Registering new user');
+
     return this.ds.transaction(async (manager) => {
-      const user = new User();
-      const address = new Address();
-
-      user.cpf = userDto.cpf;
-      user.name = userDto.name;
-      user.email = userDto.email;
-      user.password = userDto.password;
-      user.phone = userDto.phone;
-      user.address = address;
-      user.role = UserRole.CLIENT;
-
-      user.verificationToken = Buffer.from(randomBytes(64)).toString('hex');
-
-      address.street = userDto.address.street;
-      address.number = userDto.address.number;
-      address.neighborhood = userDto.address.neighborhood;
-      address.complement = userDto.address.complement;
-      address.city = userDto.address.city;
-      address.state = userDto.address.state;
-      address.zipCode = userDto.address.zipCode;
+      const address = Address.create({
+        ...userDto.address,
+      });
+      const user = User.create({
+        ...userDto,
+        address,
+        role: UserRole.CLIENT,
+        verificationToken: generateHexToken(VERIFICATION_TOKEN_LENGTH),
+      });
 
       await manager.save(user);
       await this.sendVerificationEmail(user);
+
+      this.logger.log(`User ${user.id} registered`);
 
       return user;
     });
