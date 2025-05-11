@@ -1,0 +1,17 @@
+{
+  "name": "@musat/core",
+  "version": "0.0.1",
+  "description": "Core library for the MUSAT project",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "contributors": [
+    "Adrian Cerbaro <178304@upf.br>",
+    "Giovanni Assonalio Cerbaro <155097@upf.br>"
+  ],
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  }
+}
