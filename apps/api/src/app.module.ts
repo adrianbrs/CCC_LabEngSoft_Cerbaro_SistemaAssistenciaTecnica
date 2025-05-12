@@ -8,6 +8,7 @@ import { MailgunModule } from './lib/mailgun';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { CsrfModule } from './modules/csrf/csrf.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { CsrfModule } from './modules/csrf/csrf.module';
         key: process.env.MAILGUN_KEY,
       },
     }),
+    ScheduleModule.forRoot(),
     UserModule,
     ProductModule,
     TicketModule,
