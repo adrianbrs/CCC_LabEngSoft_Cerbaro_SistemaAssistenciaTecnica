@@ -12,6 +12,7 @@ import { FRONTEND_URL } from '@/constants/env';
 import { Config } from '@/constants/config';
 import { InvalidCredentialsError } from './errors/invalid-credentials.error';
 import { AccountNotVerifiedError } from './errors/account-not-verified.error';
+import { UserUpdateDto } from './dtos/user-update.dto';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 
@@ -102,5 +103,59 @@ export class UserService {
     this.logger.log(`User ${user.id} logged in`);
 
     return user;
+  }
+
+  async update(user: User, updates: UserUpdateDto): Promise<User> {
+    this.logger.log(`Updating user ${user.id}`);
+
+    return this.ds.transaction(async (manager) => {
+      const {
+        address: addressData,
+        email,
+        password,
+        confirmPassword,
+        ...userData
+      } = updates;
+      const emailChanged = email && email !== user.email;
+
+      if (email || password) {
+        if (
+          !confirmPassword ||
+          !(await user.comparePassword(confirmPassword))
+        ) {
+          this.logger.warn(
+            `Invalid password confirmation during update of user ${user.id}`,
+          );
+          throw new InvalidCredentialsError();
+        }
+      }
+
+      if (addressData) {
+        Address.merge(user.address, { ...addressData });
+      }
+
+      User.merge(user, {
+        ...userData,
+        ...(email && { email }),
+        ...(password && {
+          password: await User.hashPassword(password),
+        }),
+      });
+
+      if (emailChanged) {
+        user.verificationToken = generateHexToken(VERIFICATION_TOKEN_LENGTH);
+        user.verifiedAt = null;
+      }
+
+      await manager.save(user);
+
+      if (emailChanged) {
+        await this.sendVerificationEmail(user);
+      }
+
+      this.logger.log(`User ${user.id} updated`);
+
+      return user;
+    });
   }
 }

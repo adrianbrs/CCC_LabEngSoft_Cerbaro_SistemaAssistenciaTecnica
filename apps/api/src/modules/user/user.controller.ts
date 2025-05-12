@@ -5,6 +5,7 @@ import {
   HttpCode,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { User } from './models/user.entity';
@@ -13,18 +14,11 @@ import { UserVerifyDto } from './dtos/user-verify.dto';
 import { UserRegisterDto } from './dtos/user-register.dto';
 import { UserService } from './user.service';
 import { LoggedUser, Public } from '../auth/auth.decorator';
+import { UserUpdateDto } from './dtos/user-update.dto';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-
-  /**
-   * Retrieves the currently authenticated user.
-   */
-  @Get('/me')
-  getMe(@LoggedUser() user: User) {
-    return user;
-  }
 
   /**
    * Verifies a user's email address using the provided token.
@@ -50,5 +44,21 @@ export class UserController {
   @HttpCode(201)
   async register(@Body() userDto: UserRegisterDto) {
     return this.userService.register(userDto);
+  }
+
+  /**
+   * Retrieves the currently authenticated user.
+   */
+  @Get('/me')
+  getMe(@LoggedUser() user: User) {
+    return user;
+  }
+
+  /**
+   * Updates the currently authenticated user's information.
+   */
+  @Patch('/me')
+  updateMe(@LoggedUser() user: User, @Body() userUpdateDto: UserUpdateDto) {
+    return this.userService.update(user, userUpdateDto);
   }
 }

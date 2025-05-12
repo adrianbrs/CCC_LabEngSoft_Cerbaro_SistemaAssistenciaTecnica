@@ -44,6 +44,17 @@ export class User extends CoreEntity implements IUserEntity {
   @JoinColumn()
   address: Address;
 
+  async comparePassword(password: string | Buffer): Promise<boolean> {
+    let hash = this.password;
+    if (!hash) {
+      hash = await User.findOneOrFail({
+        where: { id: this.id },
+        select: ['id', 'password'],
+      }).then((user) => user.password);
+    }
+    return User.comparePassword(password, hash);
+  }
+
   /**
    * Verifies the user's email address using the provided token.
    */

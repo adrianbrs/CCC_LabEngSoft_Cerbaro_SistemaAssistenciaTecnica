@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { CsrfIgnore } from './csrf.decorator';
@@ -10,6 +15,8 @@ const IGNORED_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 @Injectable()
 export class CsrfGuard implements CanActivate {
+  private readonly logger = new Logger(CsrfGuard.name);
+
   constructor(private readonly reflector: Reflector) {}
 
   isRequestValid(req: Request, ignore: boolean): boolean {
@@ -43,6 +50,9 @@ export class CsrfGuard implements CanActivate {
       return true;
     }
 
+    this.logger.warn(
+      `CSRF validation failed for ${req.method} ${req.url} of user session ${req.session?.id}`,
+    );
     throw new CsrfError();
   }
 }
