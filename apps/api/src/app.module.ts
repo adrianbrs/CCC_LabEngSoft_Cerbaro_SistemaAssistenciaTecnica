@@ -7,6 +7,7 @@ import { IS_DEV } from './constants/env';
 import { MailgunModule } from './lib/mailgun';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
+import { CsrfModule } from './modules/csrf/csrf.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AuthModule } from './modules/auth/auth.module';
     TicketModule,
     MailgunModule,
     AuthModule,
+    CsrfModule,
   ],
   providers: [
     // Global serializer interceptor

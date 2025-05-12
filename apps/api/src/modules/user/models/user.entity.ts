@@ -82,7 +82,7 @@ export class User extends CoreEntity implements IUserEntity {
       .select('*')
       .where('user.email = :email', { email })
       .getRawOne()
-      .then((data: object) => User.create({ ...data }));
+      .then((data: object | null) => (data ? User.create({ ...data }) : null));
 
     if (!user) {
       return null;

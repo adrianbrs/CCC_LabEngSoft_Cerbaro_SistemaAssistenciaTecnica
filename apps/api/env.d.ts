@@ -26,6 +26,7 @@ declare global {
       // SECURITY
       BCRYPT_SALT_ROUNDS: string;
       COOKIE_SECRET: string;
+      CSRF_TOKEN_SIZE: string;
     }
   }
 }

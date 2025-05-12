@@ -7,6 +7,9 @@ export const Config = {
       name: 'MUSAT_UID',
     },
   },
+  csrf: {
+    headerName: 'x-csrf-token',
+  },
   frontend: {
     accountVerificationPath: '/users/verify',
   },

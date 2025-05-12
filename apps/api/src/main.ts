@@ -14,6 +14,7 @@ import { Session } from './modules/auth/models/session.entity';
 import { Repository } from 'typeorm';
 import { Config } from './constants/config';
 import * as cookieParser from 'cookie-parser';
+import { Request } from 'express';
 
 const logger = new Logger('bootstrap');
 
@@ -65,6 +66,15 @@ async function bootstrap() {
     () => SwaggerModule.createDocument(app, config),
     {
       jsonDocumentUrl: 'swagger/json',
+      swaggerOptions: {
+        requestInterceptor: async (req: RequestInit) => {
+          const { csrfToken } = await fetch('/csrf').then(
+            (res) => res.json() as Promise<{ csrfToken: string }>,
+          );
+          req.headers!['x-csrf-token'] = csrfToken;
+          return req;
+        },
+      },
     },
   );
 

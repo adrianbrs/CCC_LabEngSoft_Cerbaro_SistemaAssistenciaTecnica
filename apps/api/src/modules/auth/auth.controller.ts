@@ -13,6 +13,7 @@ import { UserService } from '../user/user.service';
 import type { Session as ISession, SessionData } from 'express-session';
 import { Response } from 'express';
 import { Config } from '@/constants/config';
+import { CsrfUpdate } from '../csrf/csrf.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -21,6 +22,7 @@ export class AuthController {
   /**
    * Authenticates a user using the provided email and password and creates a session.
    */
+  @CsrfUpdate()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
