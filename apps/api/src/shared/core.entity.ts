@@ -20,5 +20,5 @@ export abstract class CoreEntity extends BaseEntity implements ICoreEntity {
 
   @Exclude()
   @DeleteDateColumn()
-  deletedAt: Date;
+  deletedAt: Date | null;
 }

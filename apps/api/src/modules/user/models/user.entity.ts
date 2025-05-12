@@ -88,8 +88,15 @@ export class User extends CoreEntity implements IUserEntity {
   static async findByEmailAndPassword(
     email: string,
     password: string,
+    includeDeleted = false,
   ): Promise<User | null> {
-    const user = await this.createQueryBuilder('user')
+    let qb = this.createQueryBuilder('user');
+
+    if (includeDeleted) {
+      qb = qb.withDeleted();
+    }
+
+    const user = await qb
       .select('*')
       .where('user.email = :email', { email })
       .getRawOne()

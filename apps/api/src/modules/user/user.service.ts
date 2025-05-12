@@ -13,6 +13,7 @@ import { Config } from '@/constants/config';
 import { InvalidCredentialsError } from './errors/invalid-credentials.error';
 import { AccountNotVerifiedError } from './errors/account-not-verified.error';
 import { UserUpdateDto } from './dtos/user-update.dto';
+import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 
@@ -32,6 +33,13 @@ export class UserService {
     });
   }
 
+  async sendTemplateEmail(user: User, template: string, data: object) {
+    return this.sendEmail(user, {
+      template,
+      'h:X-Mailgun-Variables': JSON.stringify(data),
+    });
+  }
+
   async sendVerificationEmail(user: User) {
     if (user.verifiedAt) {
       throw new AccountAlreadyVerifiedError();
@@ -45,12 +53,9 @@ export class UserService {
     url.searchParams.set('user', user.id);
     url.searchParams.set('token', user.verificationToken);
 
-    return this.sendEmail(user, {
-      template: 'verify_email',
-      'h:X-Mailgun-Variables': JSON.stringify({
-        name: user.name,
-        verification_url: url.toString(),
-      }),
+    return this.sendTemplateEmail(user, 'verify_email', {
+      name: user.name,
+      verification_url: url.toString(),
     });
   }
 
@@ -88,7 +93,7 @@ export class UserService {
   async login(email: string, password: string): Promise<User> {
     this.logger.log('User login attempt');
 
-    const user = await User.findByEmailAndPassword(email, password);
+    const user = await User.findByEmailAndPassword(email, password, true);
 
     if (!user) {
       this.logger.warn('Invalid credentials');
@@ -98,6 +103,20 @@ export class UserService {
     if (!user.verifiedAt) {
       this.logger.log(`User ${user.id} is not verified`);
       throw new AccountNotVerifiedError();
+    }
+
+    if (user.deletedAt) {
+      await this.ds.transaction(async (manager) => {
+        this.logger.log(
+          `Login attempt for deleted user ${user.id}, reactivating...`,
+        );
+        user.deletedAt = null;
+        await manager.save(user);
+
+        await this.sendTemplateEmail(user, 'account_reactivation_notice', {
+          name: user.name,
+        });
+      });
     }
 
     this.logger.log(`User ${user.id} logged in`);
@@ -156,6 +175,26 @@ export class UserService {
       this.logger.log(`User ${user.id} updated`);
 
       return user;
+    });
+  }
+
+  async deactivate(user: User, dto: UserDeactivateDto): Promise<void> {
+    this.logger.log(`Deactivating user ${user.id}`);
+
+    await this.ds.transaction(async (manager) => {
+      if (!(await user.comparePassword(dto.password))) {
+        this.logger.warn(
+          `Invalid password confirmation during deactivation of user ${user.id}`,
+        );
+        throw new InvalidCredentialsError();
+      }
+
+      await manager.softRemove(user);
+      await this.sendTemplateEmail(user, 'account_deactivation_notice', {
+        name: user.name,
+      });
+
+      this.logger.log(`User ${user.id} deactivated`);
     });
   }
 }

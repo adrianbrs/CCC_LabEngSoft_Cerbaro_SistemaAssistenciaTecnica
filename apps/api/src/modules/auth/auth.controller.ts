@@ -44,6 +44,7 @@ export class AuthController {
   /**
    * Logs out the user by destroying the session.
    */
+  @Public()
   @Delete('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {

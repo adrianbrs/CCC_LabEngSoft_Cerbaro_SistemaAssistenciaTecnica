@@ -15,6 +15,7 @@ import { UserRegisterDto } from './dtos/user-register.dto';
 import { UserService } from './user.service';
 import { LoggedUser, Public } from '../auth/auth.decorator';
 import { UserUpdateDto } from './dtos/user-update.dto';
+import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 
 @Controller('users')
 export class UserController {
@@ -60,5 +61,16 @@ export class UserController {
   @Patch('/me')
   updateMe(@LoggedUser() user: User, @Body() userUpdateDto: UserUpdateDto) {
     return this.userService.update(user, userUpdateDto);
+  }
+
+  /**
+   * Request account deactivation for the currently authenticated user.
+   */
+  @Post('/me/deactivate')
+  deactivateMe(
+    @LoggedUser() user: User,
+    @Body() userDeactivateDto: UserDeactivateDto,
+  ) {
+    return this.userService.deactivate(user, userDeactivateDto);
   }
 }
