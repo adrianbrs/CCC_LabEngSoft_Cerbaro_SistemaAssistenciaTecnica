@@ -40,7 +40,7 @@ export class User extends CoreEntity implements IUserEntity {
   @Column({ type: 'varchar', length: 14, nullable: false })
   phone: string;
 
-  @OneToOne(() => Address, { cascade: true })
+  @OneToOne(() => Address, { cascade: true, eager: true })
   @JoinColumn()
   address: Address;
 
