@@ -7,13 +7,14 @@ import { UserRegisterDto } from './dtos/user-register.dto';
 import { Address } from './models/address.entity';
 import { UserRole } from '@musat/core';
 import { DataSource } from 'typeorm';
-import { generateHexToken } from '@/shared/utils';
+import { generateHexToken, replaceMustacheVariables } from '@/shared/utils';
 import { FRONTEND_URL } from '@/constants/env';
 import { Config } from '@/constants/config';
 import { InvalidCredentialsError } from './errors/invalid-credentials.error';
 import { AccountNotVerifiedError } from './errors/account-not-verified.error';
 import { UserUpdateDto } from './dtos/user-update.dto';
 import { UserDeactivateDto } from './dtos/user-deactivate.dto';
+import { Messages } from '@/constants/messages';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 
@@ -33,10 +34,17 @@ export class UserService {
     });
   }
 
-  async sendTemplateEmail(user: User, template: string, data: object) {
+  async sendTemplateEmail(
+    user: User,
+    template: string,
+    options: { subject?: string; data: object },
+  ) {
     return this.sendEmail(user, {
       template,
-      'h:X-Mailgun-Variables': JSON.stringify(data),
+      'h:X-Mailgun-Variables': JSON.stringify(options.data),
+      ...(options.subject && {
+        subject: replaceMustacheVariables(options.subject, options.data),
+      }),
     });
   }
 
@@ -54,8 +62,11 @@ export class UserService {
     url.searchParams.set('token', user.verificationToken);
 
     return this.sendTemplateEmail(user, 'verify_email', {
-      name: user.name,
-      verification_url: url.toString(),
+      subject: Messages.user.email.accountVerificationSubject,
+      data: {
+        name: user.name,
+        verification_url: url.toString(),
+      },
     });
   }
 
@@ -114,7 +125,10 @@ export class UserService {
         await manager.save(user);
 
         await this.sendTemplateEmail(user, 'account_reactivation_notice', {
-          name: user.name,
+          subject: Messages.user.email.accountReactivationSubject,
+          data: {
+            name: user.name,
+          },
         });
       });
     }
@@ -191,7 +205,10 @@ export class UserService {
 
       await manager.softRemove(user);
       await this.sendTemplateEmail(user, 'account_deactivation_notice', {
-        name: user.name,
+        subject: Messages.user.email.accountDeactivationSubject,
+        data: {
+          name: user.name,
+        },
       });
 
       this.logger.log(`User ${user.id} deactivated`);

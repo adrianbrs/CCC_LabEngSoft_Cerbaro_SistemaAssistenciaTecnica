@@ -13,3 +13,12 @@ export const safeCompareStrings = (a: string, b: string): boolean => {
 
 export const generateHexToken = (length: number): string =>
   Buffer.from(randomBytes(length)).toString('hex');
+
+export const replaceMustacheVariables = (str: string, data: object): string => {
+  return str.replace(/{{\s?([\w\s]*)\s?}}/g, (_, key: string) => {
+    const trimmedKey = key.trim();
+    return data[trimmedKey] !== undefined
+      ? String(data[trimmedKey])
+      : `{{${trimmedKey}}}`;
+  });
+};
