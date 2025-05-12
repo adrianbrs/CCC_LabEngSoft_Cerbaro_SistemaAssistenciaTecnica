@@ -14,5 +14,4 @@ export const BCRYPT_SALT_ROUNDS = parseInt(
   process.env.BCRYPT_SALT_ROUNDS || '10',
   10,
 );
-export const SESSION_SECRET = process.env.SESSION_SECRET;
-export const SESSION_NAME = process.env.SESSION_NAME || 'MUSAT_SID';
+export const COOKIE_SECRET = process.env.COOKIE_SECRET;

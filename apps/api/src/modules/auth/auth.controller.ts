@@ -12,7 +12,7 @@ import { UserLoginDto } from './dtos/user-login.dto';
 import { UserService } from '../user/user.service';
 import type { Session as ISession, SessionData } from 'express-session';
 import { Response } from 'express';
-import { SESSION_NAME } from '@/constants/env';
+import { Config } from '@/constants/config';
 
 @Controller('auth')
 export class AuthController {
@@ -51,7 +51,8 @@ export class AuthController {
         if (err) {
           return reject(err);
         }
-        res.clearCookie(SESSION_NAME, { path: cookieOpts.path });
+        res.clearCookie(Config.cookies.session.name, { path: cookieOpts.path });
+        res.clearCookie(Config.cookies.userId.name, { path: cookieOpts.path });
         resolve();
       });
     });

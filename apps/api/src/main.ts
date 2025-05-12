@@ -2,13 +2,7 @@ import './env';
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import {
-  IS_PROD,
-  PORT,
-  SESSION_NAME,
-  SESSION_SECRET,
-  VERSION,
-} from '@/constants/env';
+import { IS_PROD, PORT, COOKIE_SECRET, VERSION } from '@/constants/env';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -18,6 +12,8 @@ import * as ms from 'ms';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Session } from './modules/auth/models/session.entity';
 import { Repository } from 'typeorm';
+import { Config } from './constants/config';
+import * as cookieParser from 'cookie-parser';
 
 const logger = new Logger('bootstrap');
 
@@ -39,8 +35,8 @@ async function bootstrap() {
 
   app.use(
     session({
-      secret: SESSION_SECRET,
-      name: SESSION_NAME,
+      secret: COOKIE_SECRET,
+      name: Config.cookies.session.name,
       resave: false,
       saveUninitialized: false,
       rolling: true,
@@ -54,6 +50,8 @@ async function bootstrap() {
       store: new TypeormStore().connect(sessionRepository),
     }),
   );
+
+  app.use(cookieParser(COOKIE_SECRET));
 
   const config = new DocumentBuilder()
     .setTitle('Musat API')
