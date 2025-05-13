@@ -11,6 +11,6 @@ export const Config = {
     headerName: 'x-csrf-token',
   },
   frontend: {
-    accountVerificationPath: '/users/verify',
+    accountVerificationPath: '/account/verify',
   },
 } as const;

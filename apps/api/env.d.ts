@@ -7,6 +7,7 @@ declare global {
       PORT: string;
       VERSION: string;
       NODE_ENV: 'development' | 'production' | 'test';
+      CORS_ORIGIN: string;
 
       // FRONTEND
       FRONTEND_URL: string;

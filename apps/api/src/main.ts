@@ -2,7 +2,13 @@ import './env';
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { IS_PROD, PORT, COOKIE_SECRET, VERSION } from '@/constants/env';
+import {
+  IS_PROD,
+  PORT,
+  COOKIE_SECRET,
+  VERSION,
+  CORS_ORIGIN,
+} from '@/constants/env';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -20,7 +26,10 @@ const logger = new Logger('bootstrap');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    cors: true,
+    cors: {
+      credentials: true,
+      origin: CORS_ORIGIN,
+    },
   });
 
   const sessionRepository = app.get<Repository<Session>>(
