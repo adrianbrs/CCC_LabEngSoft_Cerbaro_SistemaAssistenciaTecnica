@@ -7,7 +7,11 @@ import { UserRegisterDto } from './dtos/user-register.dto';
 import { Address } from './models/address.entity';
 import { UserRole } from '@musat/core';
 import { DataSource } from 'typeorm';
-import { generateHexToken, replaceMustacheVariables } from '@/shared/utils';
+import {
+  generateHexToken,
+  replaceMustacheVariables,
+  safeCompareStrings,
+} from '@/shared/utils';
 import { FRONTEND_URL } from '@/constants/env';
 import { Config } from '@/constants/config';
 import { InvalidCredentialsError } from './errors/invalid-credentials.error';
@@ -15,6 +19,7 @@ import { AccountNotVerifiedError } from './errors/account-not-verified.error';
 import { UserUpdateDto } from './dtos/user-update.dto';
 import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 import { Messages } from '@/constants/messages';
+import { AccountVerificationError } from './errors/account-verification.error';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 
@@ -68,6 +73,32 @@ export class UserService {
         verification_url: url.toString(),
       },
     });
+  }
+
+  async verify(userId: string, token: string): Promise<User> {
+    const user = await User.createQueryBuilder()
+      .select('*')
+      .where('id = :id', { id: userId })
+      .getRawOne()
+      .then((data: object) => User.create({ ...data }));
+
+    if (user && user.verificationToken) {
+      if (safeCompareStrings(user.verificationToken, token)) {
+        if (!user.verifiedAt) {
+          user.verifiedAt = new Date();
+          await user.save();
+        }
+
+        return User.create({
+          ...user,
+          address: undefined,
+          password: undefined,
+          verificationToken: undefined,
+        });
+      }
+    }
+
+    throw new AccountVerificationError();
   }
 
   async register(userDto: UserRegisterDto): Promise<User> {

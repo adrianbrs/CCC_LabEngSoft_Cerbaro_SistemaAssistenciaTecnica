@@ -1,5 +1,4 @@
 import { CoreEntity } from '@/shared/core.entity';
-import { safeCompareStrings } from '@/shared/utils';
 import { IUserEntity, UserRole } from '@musat/core';
 import { Column, Entity, Index, JoinColumn, OneToOne } from 'typeorm';
 import { Address } from './address.entity';
@@ -53,33 +52,6 @@ export class User extends CoreEntity implements IUserEntity {
       }).then((user) => user.password);
     }
     return User.comparePassword(password, hash);
-  }
-
-  /**
-   * Verifies the user's email address using the provided token.
-   */
-  static async verify(userId: string, token: string): Promise<User | null> {
-    const user = await this.createQueryBuilder()
-      .select('*')
-      .where('id = :id', { id: userId })
-      .getRawOne()
-      .then((data: object) => User.create({ ...data }));
-
-    if (user && user.verificationToken) {
-      if (!safeCompareStrings(user.verificationToken, token)) {
-        return null;
-      }
-
-      user.verifiedAt = new Date();
-      user.verificationToken = null;
-      await user.save();
-      return User.create({
-        ...user,
-        password: undefined,
-        verificationToken: undefined,
-      });
-    }
-    return null;
   }
 
   /**
