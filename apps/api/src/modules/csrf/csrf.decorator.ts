@@ -16,7 +16,7 @@ export const CsrfToken = createParamDecorator(
  * Decorator to ignore CSRF token validation.
  */
 export const CsrfIgnore = Reflector.createDecorator<boolean>({
-  key: 'csrfIgnore',
+  key: 'csrf:ignore',
   transform(value) {
     if (value === undefined) {
       return true;
@@ -31,7 +31,7 @@ export const CsrfIgnore = Reflector.createDecorator<boolean>({
  * This also sets the CSRF token in the response header.
  */
 export const CsrfUpdate = Reflector.createDecorator({
-  key: 'csrfUpdate',
+  key: 'csrf:update',
   transform(value) {
     if (value === undefined) {
       return true;

@@ -1,4 +1,4 @@
-import { IUserEntity } from '@musat/core';
+import { IUserEntity, UserRole } from '@musat/core';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
@@ -25,6 +25,17 @@ export const Public = () => Authenticate(false);
  * Makes a route private.
  */
 export const Private = () => Authenticate(true);
+
+/**
+ * Specify the required roles for a specific route.
+ */
+export const Authorize = Reflector.createDecorator<
+  UserRole | UserRole[],
+  UserRole[]
+>({
+  key: 'auth:role',
+  transform: (value) => (value ? (Array.isArray(value) ? value : [value]) : []),
+});
 
 /**
  * Get the authenticated user from the request.
