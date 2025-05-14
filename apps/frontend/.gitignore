@@ -48,5 +48,4 @@ npm-debug.log*
 /.vscode
 /coverage
 /platforms
-/plugins
 /www
