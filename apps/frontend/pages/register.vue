@@ -7,6 +7,7 @@ import type { AddressFormData } from "~/components/AddressForm.vue";
 
 definePageMeta({
   layout: "single-card",
+  middleware: ["guest"],
 });
 
 useHead({
@@ -315,7 +316,9 @@ const stepper = useTemplateRef("stepper");
           v-else
           type="submit"
           class="cursor-pointer col-2 justify-self-end"
-          :disabled="isSubmitting"
+          :loading="isSubmitting"
+          icon="i-lucide-arrow-right"
+          trailing
         >
           Criar conta
         </UButton>
@@ -325,7 +328,7 @@ const stepper = useTemplateRef("stepper");
     <template #footer>
       <p class="text-center">
         Já tem uma conta?
-        <ULink to="/login">Entrar</ULink>
+        <ULink to="/login">Entre</ULink>
       </p>
     </template>
   </UCard>
