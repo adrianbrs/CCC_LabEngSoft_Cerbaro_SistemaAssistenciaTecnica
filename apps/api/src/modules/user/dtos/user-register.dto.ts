@@ -1,18 +1,24 @@
 import {
   IsEmail,
+  IsNotEmpty,
   IsNumberString,
-  IsStrongPassword,
   Length,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { AddressDto } from '../../address/dtos/address.dto';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsCPF, IsStrongPassword } from '@/shared/dto-validators';
+import { IsUnique } from '@/modules/shared/validators';
+import { User } from '../models/user.entity';
 
 export class UserRegisterDto {
-  @Length(11, 11)
-  @IsNumberString()
+  @IsCPF()
   @ApiProperty({ example: '05660877079' })
+  @IsUnique(User, {
+    message: 'CPF_ALREADY_EXISTS',
+  })
   cpf: string;
 
   @Length(3, 100)
@@ -20,13 +26,13 @@ export class UserRegisterDto {
 
   @Length(3, 255)
   @IsEmail()
+  @IsUnique(User, {
+    message: 'EMAIL_ALREADY_EXISTS',
+  })
   email: string;
 
-  @Length(8, 55)
-  @IsStrongPassword({
-    minLength: 8,
-    minSymbols: 0,
-  })
+  @MaxLength(55) // Max bcrypt password length
+  @IsStrongPassword()
   @ApiProperty({ example: 'ABCdef123' })
   password: string;
 

@@ -6,6 +6,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "core": "pnpm --filter @musat/core",
     "api": "pnpm --filter @musat/api",
     "frontend": "pnpm --filter @musat/frontend",
     "frontend:cap": "pnpm frontend exec cap"
@@ -19,6 +20,7 @@
   "packageManager": "pnpm@10.6.5",
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "tsup": "^8.4.0",
     "turbo": "^2.5.2",
     "type-fest": "^4.40.1",
     "typescript": "^5.8.3"

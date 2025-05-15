@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CsrfModule } from './modules/csrf/csrf.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AddressModule } from './modules/address/address.module';
+import { SharedModule } from './modules/shared/shared.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AddressModule } from './modules/address/address.module';
     AuthModule,
     CsrfModule,
     AddressModule,
+    SharedModule,
   ],
   providers: [
     // Global serializer interceptor

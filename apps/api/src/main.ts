@@ -20,7 +20,7 @@ import { Session } from './modules/auth/models/session.entity';
 import { Repository } from 'typeorm';
 import { Config } from './constants/config';
 import * as cookieParser from 'cookie-parser';
-import { Request } from 'express';
+import { useContainer } from 'class-validator';
 
 const logger = new Logger('bootstrap');
 
@@ -31,6 +31,8 @@ async function bootstrap() {
       origin: CORS_ORIGIN,
     },
   });
+
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   const sessionRepository = app.get<Repository<Session>>(
     getRepositoryToken(Session),
