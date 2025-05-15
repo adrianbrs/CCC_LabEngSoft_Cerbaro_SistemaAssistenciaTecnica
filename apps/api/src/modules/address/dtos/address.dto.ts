@@ -4,8 +4,9 @@ export class AddressDto {
   @Length(3, 255)
   street: string;
 
-  @Length(1, 10)
-  number: string;
+  @MaxLength(10)
+  @IsOptional()
+  number: string | null = null;
 
   @Length(3, 100)
   neighborhood: string;

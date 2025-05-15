@@ -4,7 +4,7 @@ import { User } from './models/user.entity';
 import { AccountAlreadyVerifiedError } from './errors/account-already-verified.error';
 import { MissingVerificationTokenError } from './errors/missing-verification-token.error';
 import { UserRegisterDto } from './dtos/user-register.dto';
-import { Address } from './models/address.entity';
+import { Address } from '../address/models/address.entity';
 import { UserRole } from '@musat/core';
 import { DataSource } from 'typeorm';
 import {

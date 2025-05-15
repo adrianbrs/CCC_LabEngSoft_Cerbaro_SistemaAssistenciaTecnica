@@ -1,7 +1,7 @@
 import { CoreEntity } from '@/shared/core.entity';
 import { IUserEntity, UserRole } from '@musat/core';
 import { Column, Entity, Index, JoinColumn, OneToOne } from 'typeorm';
-import { Address } from './address.entity';
+import { Address } from '../../address/models/address.entity';
 import { Exclude } from 'class-transformer';
 import { hash, compare } from 'bcrypt';
 import { BCRYPT_SALT_ROUNDS } from '@/constants/env';

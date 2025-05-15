@@ -7,8 +7,8 @@ export class Address extends CoreEntity implements IAddressEntity {
   @Column({ type: 'varchar', length: 255 })
   street: string;
 
-  @Column({ type: 'varchar', length: 10 })
-  number: string;
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  number: string | null;
 
   @Column({ type: 'varchar', length: 100 })
   neighborhood: string;

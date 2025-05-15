@@ -5,7 +5,7 @@ import {
   Length,
   ValidateNested,
 } from 'class-validator';
-import { AddressDto } from './address.dto';
+import { AddressDto } from '../../address/dtos/address.dto';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -35,6 +35,7 @@ export class UserRegisterDto {
   @ApiProperty({ example: '99999999999' })
   phone: string;
 
+  @IsNotEmpty()
   @ValidateNested()
   @Type(() => AddressDto)
   address: AddressDto;

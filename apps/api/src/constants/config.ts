@@ -13,4 +13,9 @@ export const Config = {
   frontend: {
     accountVerificationPath: '/account/verify',
   },
+  api: {
+    brasil: {
+      baseURL: 'https://brasilapi.com.br',
+    },
+  },
 } as const;

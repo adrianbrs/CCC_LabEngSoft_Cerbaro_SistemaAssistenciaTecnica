@@ -6,7 +6,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { AddressUpdateDto } from './address-update.dto';
+import { AddressUpdateDto } from '../../address/dtos/address-update.dto';
 import { Type } from 'class-transformer';
 
 export class UserUpdateDto extends PartialType(

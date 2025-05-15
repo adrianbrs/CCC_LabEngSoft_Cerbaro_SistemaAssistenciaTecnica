@@ -9,6 +9,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { CsrfModule } from './modules/csrf/csrf.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AddressModule } from './modules/address/address.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     MailgunModule,
     AuthModule,
     CsrfModule,
+    AddressModule,
   ],
   providers: [
     // Global serializer interceptor
