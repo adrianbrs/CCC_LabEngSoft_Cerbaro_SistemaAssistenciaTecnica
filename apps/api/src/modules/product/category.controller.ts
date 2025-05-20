@@ -20,12 +20,12 @@ export class CategoryController {
   }*/
 
   @Post()
-  async createCategory(@Body() categoryDto: CategoryDto) {
+  async create(@Body() categoryDto: CategoryDto) {
     return this.categoryService.create(categoryDto);
   }
 
   @Patch(':id')
-  async updateCategory(
+  async update(
     @Param('id') id: string,
     @Body() updateCategoryDto: CategoryUpdateDto,
   ) {
