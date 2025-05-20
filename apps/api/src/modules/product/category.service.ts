@@ -11,6 +11,19 @@ export class CategoryService{
         this.logger.log('CategoryService initialized');
     }
 
+    async getCategoryById(categoryId: Category['id']): Promise<CategoryDto> {
+        this.logger.log(`Fetching category with ID: ${categoryId}`);
+        
+        const category = await Category.findOneOrFail({
+            where: {
+                id: categoryId
+            }
+        });
+        this.logger.log(`Category found: ${JSON.stringify(category)}`);
+        return category;
+    }
+    
+
     async create(categoryDto: CategoryDto): Promise<CategoryDto>{
 
         const category = Category.create({
@@ -34,6 +47,18 @@ export class CategoryService{
         Category.merge(category, {...updates});
 
         return category.save();
+    }
+
+    async delete(categoryId: Category['id']): Promise<void> {
+        this.logger.log(`Deleting category with ID: ${categoryId}`);
+
+        const category = await Category.findOneOrFail({
+            where: {
+                id: categoryId
+            }
+        });
+        await category.remove();
+        this.logger.log(`Category with ID: ${categoryId} deleted`); 
     }
 
 }

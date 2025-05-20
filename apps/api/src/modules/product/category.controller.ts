@@ -13,11 +13,11 @@ export class CategoryController {
     return Category.find() ;
   }
 
-  /*
+  
   @Get(':id')
   async getCategoryById(@Param('id') id: string) {
     return this.categoryService.getCategoryById(id);
-  }*/
+  }
 
   @Post()
   async create(@Body() categoryDto: CategoryDto) {
@@ -32,9 +32,9 @@ export class CategoryController {
     return this.categoryService.update(id, updateCategoryDto);
   }
 
-  /*
+  
   @Delete(':id')
   async deleteCategory(@Param('id') id: string) {
     return this.categoryService.delete(id);
-  }*/
+  }
 }

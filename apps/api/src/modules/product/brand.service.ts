@@ -20,6 +20,19 @@ export class BrandService {
 
     }
 
+    async getBrandByName(name: string): Promise<Brand> {
+        this.logger.log(`Fetching brand with name: ${name}`);
+
+        const brand = await Brand.findOneOrFail({
+            where: {
+                name
+            }
+        });
+
+        this.logger.log(`Brand found: ${JSON.stringify(brand)}`);
+        return brand;
+    }
+
     async update(brandId: Brand['id'], updates: BrandUpdateDto): Promise<Brand> {
         this.logger.log(`Updating brand ${brandId}`);
 

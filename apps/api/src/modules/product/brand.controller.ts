@@ -23,6 +23,12 @@ export class BrandController {
     return Brand.find();
   }
 
+  @Get(':name')
+  @Authorize(UserRole.ADMIN)
+  async getBrandByName(@Param('name') name: string) {
+    return this.brandService.getBrandByName(name);
+  }
+
   @Post()
   @Authorize(UserRole.ADMIN)
   async create(@Body() brandDto: BrandDto) {
