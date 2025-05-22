@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: "single-card",
+  auth: false,
   validate(route) {
     const {
       query: { user, token },
@@ -41,7 +42,7 @@ const { error, pending, refresh } = useApi(`/users/${user}/verify`, {
 </script>
 
 <template>
-  <UCard class="w-full md:w-[500px]">
+  <UCard class="w-full sm:w-[500px]">
     <template #header>
       <h2>Verificação de Conta</h2>
     </template>

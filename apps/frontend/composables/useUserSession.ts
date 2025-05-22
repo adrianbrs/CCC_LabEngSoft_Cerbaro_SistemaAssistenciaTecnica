@@ -1,17 +1,18 @@
-import type { IUserEntity } from "@musat/core";
+import { UID_COOKIE_NAME, type IUserEntity } from "@musat/core";
 
 const user = ref<IUserEntity | null>(null);
-const isLoggedIn = ref(document.cookie.includes("MUSAT_UID"));
 
 export const useUserSession = <T extends boolean>(required?: T) => {
   const router = useRouter();
   const toast = useToast();
+  const userId = useCookie(UID_COOKIE_NAME);
   const { $api } = useNuxtApp();
+  const isLoggedIn = computed(() => !!userId.value);
 
   const refresh = async () =>
     $api<IUserEntity>("/users/me").then((res) => {
       user.value = res;
-      isLoggedIn.value = !!res;
+      userId.value = res.id;
       return res;
     });
 
@@ -28,16 +29,18 @@ export const useUserSession = <T extends boolean>(required?: T) => {
     return refresh();
   };
 
-  const logout = async () => {
-    if (isLoggedIn.value) {
+  const logout = async (force?: boolean) => {
+    if (isLoggedIn.value || force) {
       await $api("/auth/logout", {
         credentials: "include",
         method: "DELETE",
+      }).catch((err) => {
+        console.error("[useUserSession] logout request failed", err);
       });
     }
 
     user.value = null;
-    isLoggedIn.value = false;
+    userId.value = null;
   };
 
   if (!user.value && required) {
@@ -49,7 +52,9 @@ export const useUserSession = <T extends boolean>(required?: T) => {
       close: true,
     });
     router.push("/login");
-    throw new Error("User not logged in");
+    throw new AuthorizationError(
+      "[useUserSession] user is not authenticated but is required in this page"
+    );
   }
 
   return {

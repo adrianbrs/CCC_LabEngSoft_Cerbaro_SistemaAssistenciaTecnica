@@ -6,6 +6,7 @@ import { z } from "zod";
 definePageMeta({
   layout: "single-card",
   middleware: ["guest"],
+  auth: false,
 });
 
 useHead({
@@ -16,6 +17,20 @@ useHead({
       content: "Acesse sua conta para solicitar Assistência Técnica",
     },
   ],
+});
+
+const route = useRoute();
+const redirectPath = computed(() => {
+  const { redirect: redirectQuery } = route.query;
+  const redirect = Array.isArray(redirectQuery)
+    ? redirectQuery[0]
+    : redirectQuery;
+
+  if (!redirect) {
+    return "/";
+  }
+
+  return new URL(redirect, window.location.origin).pathname;
 });
 
 const schema = z.object({
@@ -48,7 +63,7 @@ const onSubmit = async ({
 
   try {
     await login(email, password);
-    router.replace("/");
+    router.replace(redirectPath.value);
   } catch (err) {
     if (err instanceof FetchError) {
       if (err.response?.status === 400) {
@@ -85,7 +100,7 @@ const onSubmit = async ({
 </script>
 
 <template>
-  <UCard class="w-full md:w-[500px]">
+  <UCard class="w-full sm:w-[500px]">
     <template #header>
       <h2 class="text-xl">Entrar</h2>
     </template>
@@ -106,6 +121,7 @@ const onSubmit = async ({
           :disabled="isSubmitting"
           class="w-full"
           autofocus
+          autocomplete="email"
         />
       </UFormField>
 

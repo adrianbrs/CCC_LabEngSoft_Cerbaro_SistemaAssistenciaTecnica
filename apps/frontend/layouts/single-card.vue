@@ -1,21 +1,15 @@
 <template>
-  <UContainer class="w-full min-h-[100vh] flex">
-    <div class="mx-auto flex flex-col justify-between">
-      <header class="w-full text-center mb-8 px-8 py-6">
-        <h1 class="text-3xl font-black">MUSAT</h1>
-        <p class="text-xl">Assistência Técnica</p>
-      </header>
+  <div class="w-full min-h-[100vh] flex flex-col gap-8 justify-between">
+    <header class="mx-auto px-8 py-6">
+      <MusatLogo class="text-2xl" centered />
+    </header>
 
-      <main>
+    <UContainer class="flex">
+      <main class="w-full sm:mx-auto sm:w-auto">
         <slot />
       </main>
+    </UContainer>
 
-      <footer class="w-full text-center mt-8 px-8 py-6">
-        <p class="text-sm text-gray-500">
-          &copy; {{ new Date().getFullYear() }} MUSAT. Todos os direitos
-          reservados.
-        </p>
-      </footer>
-    </div>
-  </UContainer>
+    <LayoutFooter />
+  </div>
 </template>

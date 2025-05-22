@@ -8,6 +8,7 @@ import type { AddressFormData } from "~/components/AddressForm.vue";
 definePageMeta({
   layout: "single-card",
   middleware: ["guest"],
+  auth: false,
 });
 
 useHead({
@@ -195,7 +196,7 @@ const stepper = useTemplateRef("stepper");
 </script>
 
 <template>
-  <UCard class="w-full md:w-[500px]">
+  <UCard class="w-full sm:w-[500px]">
     <template #header>
       <h2 class="text-xl">Cadastre-se</h2>
     </template>
@@ -297,6 +298,7 @@ const stepper = useTemplateRef("stepper");
           class="cursor-pointer justify-self-start"
           color="neutral"
           variant="subtle"
+          icon="i-lucide-arrow-left"
           :disabled="isSubmitting"
           @click="stepper?.prev()"
           >Voltar</UButton
@@ -304,6 +306,8 @@ const stepper = useTemplateRef("stepper");
         <UButton
           v-if="stepper?.hasNext"
           class="cursor-pointer col-2 justify-self-end"
+          icon="i-lucide-arrow-right"
+          trailing
           @click="
             async () => {
               await form?.validate({ nested: false });

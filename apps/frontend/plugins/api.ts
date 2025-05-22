@@ -1,3 +1,5 @@
+import { CSRF_HEADER_NAME } from "@musat/core";
+
 export default defineNuxtPlugin(async (nuxtApp) => {
   let csrfToken: string | null = null;
 
@@ -6,7 +8,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     retryStatusCodes: [408, 409, 425, 429, 500, 502, 503, 504, 403],
     async onRequest({ options }) {
       if (csrfToken) {
-        options.headers.set("x-csrf-token", csrfToken);
+        options.headers.set(CSRF_HEADER_NAME, csrfToken);
+      }
+    },
+    async onResponse({ response }) {
+      if (response.headers.has(CSRF_HEADER_NAME)) {
+        // Update CSRF token if present in the response (e.g. login request)
+        csrfToken = response.headers.get(CSRF_HEADER_NAME);
       }
     },
     async onResponseError(ctx) {

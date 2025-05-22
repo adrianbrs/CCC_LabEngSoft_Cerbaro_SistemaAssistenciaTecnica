@@ -1,5 +1,5 @@
 <template>
-  <UContainer>
+  <LayoutDashboard>
     <slot />
-  </UContainer>
+  </LayoutDashboard>
 </template>

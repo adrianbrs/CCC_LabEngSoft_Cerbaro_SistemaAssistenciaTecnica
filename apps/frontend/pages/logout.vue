@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: "single-card",
+  auth: false,
 });
 
 useHead({
@@ -16,7 +17,7 @@ useHead({
 const router = useRouter();
 const { logout } = useUserSession();
 
-const { pending } = useAsyncData(() => logout(), {
+useAsyncData(() => logout(), {
   immediate: true,
   transform() {
     router.replace("/login");
@@ -25,9 +26,8 @@ const { pending } = useAsyncData(() => logout(), {
 </script>
 
 <template>
-  <UCard class="w-full md:w-[500px]">
+  <UCard class="w-full sm:w-[500px]">
     <UAlert
-      v-if="pending"
       title="Desconectando..."
       description="Estamos desconectando você, por favor, aguarde..."
       icon="i-lucide-user-round-cog"

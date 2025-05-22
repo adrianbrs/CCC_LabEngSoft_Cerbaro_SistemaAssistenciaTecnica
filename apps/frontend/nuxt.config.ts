@@ -35,4 +35,7 @@ export default defineNuxtConfig({
       },
     },
   },
+  imports: {
+    dirs: ["errors"],
+  },
 });
