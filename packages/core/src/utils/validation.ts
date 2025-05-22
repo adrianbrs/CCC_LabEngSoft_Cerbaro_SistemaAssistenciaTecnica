@@ -24,17 +24,11 @@ export const isValidCPF = (value: string) => {
 };
 
 export const isStrongPassword = (value: string) => {
-  const minChars = 8;
-  const score = _isStrongPassword(value, {
-    returnScore: true,
-    pointsForContainingLower: 1,
-    pointsForContainingNumber: 1,
-    pointsForContainingSymbol: 1,
-    pointsForContainingUpper: 1,
-    // Count 1 point if the password is at least `minChars` long
-    pointsPerRepeat: 1 / minChars,
-    pointsPerUnique: 1 / minChars,
+  return _isStrongPassword(value, {
+    minLength: 8,
+    minLowercase: 1,
+    minUppercase: 1,
+    minNumbers: 1,
+    minSymbols: 1,
   });
-  // Must meet at least 4 of the 5 criteria
-  return score >= 4;
 };

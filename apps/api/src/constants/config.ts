@@ -1,14 +1,16 @@
+import { CSRF_HEADER_NAME, UID_COOKIE_NAME } from '@musat/core';
+
 export const Config = {
   cookies: {
     session: {
       name: 'MUSAT_SID',
     },
     userId: {
-      name: 'MUSAT_UID',
+      name: UID_COOKIE_NAME,
     },
   },
   csrf: {
-    headerName: 'x-csrf-token',
+    headerName: CSRF_HEADER_NAME,
   },
   frontend: {
     accountVerificationPath: '/account/verify',
