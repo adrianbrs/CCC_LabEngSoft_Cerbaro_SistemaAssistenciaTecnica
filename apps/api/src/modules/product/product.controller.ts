@@ -12,11 +12,19 @@ export class ProductController {
     async getAll(){
         return Product.find();
     }
+
+    @Get(':id')
+    async getOne(@Param('id') id: string){
+        return Product.findOneOrFail(
+            { where: {id} }
+        )
+    }
      
     @Post()
-    async createCategory(@Body() productDto: ProductDto) {
+    async createProduct(@Body() productDto: ProductDto) {
+
         return this.productService.create(productDto);
-      }
+    }
     
     @Patch(':id')
     async update(

@@ -25,7 +25,6 @@ export class ProductService {
                 ...productData
             } = productDto;
 
-            // Verifica se brand já existe — ou cria novo
             let brand = await manager.findOne(Brand, {
                 where: { name: brandData.name },
             });
@@ -35,7 +34,6 @@ export class ProductService {
                 await manager.save(brand);
             }
 
-            // Verifica se category já existe — ou cria novo
             let category = await manager.findOne(Category, {
                 where: { name: categoryData.name },
             });
@@ -45,7 +43,6 @@ export class ProductService {
                 await manager.save(category);
             }
 
-            // Cria e salva o produto
             const product = manager.create(Product, {
                 ...productData,
                 brand,
