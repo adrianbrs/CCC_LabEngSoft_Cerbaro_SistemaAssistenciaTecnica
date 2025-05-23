@@ -1,0 +1,94 @@
+[1mdiff --git a/apps/api/src/modules/ticket/models/ticket.entity.ts b/apps/api/src/modules/ticket/models/ticket.entity.ts[m
+[1mindex cd03309..49db896 100644[m
+[1m--- a/apps/api/src/modules/ticket/models/ticket.entity.ts[m
+[1m+++ b/apps/api/src/modules/ticket/models/ticket.entity.ts[m
+[36m@@ -1,5 +1,33 @@[m
+[32m+[m[32mimport { Product } from '@/modules/product/models/product.entity';[m
+[32m+[m[32mimport { User } from '@/modules/user/models/user.entity';[m
+ import { CoreEntity } from '@/shared/core.entity';[m
+[31m-import { Entity } from 'typeorm';[m
+[32m+[m[32mimport { ITicketEntity, TicketStatus } from '@musat/core';[m
+[32m+[m[32mimport { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';[m
+[32m+[m
+ [m
+ @Entity()[m
+[31m-export class Ticket extends CoreEntity {}[m
+[32m+[m[32mexport class Ticket extends CoreEntity implements ITicketEntity{[m
+[32m+[m[32m    @ManyToOne(() => User, {eager: true})[m
+[32m+[m[32m    @JoinColumn()[m
+[32m+[m[32m    client: User;[m
+[32m+[m
+[32m+[m[32m    @ManyToOne(() => User, {eager: true})[m
+[32m+[m[32m    @JoinColumn()[m
+[32m+[m[32m    technician: User;[m
+[32m+[m
+[32m+[m[32m    @ManyToOne(() => Product, {eager: true})[m
+[32m+[m[32m    @JoinColumn()[m
+[32m+[m[32m    product: Product;[m
+[32m+[m
+[32m+[m[32m    @Column([m
+[32m+[m[32m        { type: 'enum', enum: TicketStatus, default: TicketStatus.OPEN }[m
+[32m+[m[32m    )[m
+[32m+[m[32m    status: TicketStatus;[m
+[32m+[m
+[32m+[m[32m    @Column({type: 'varchar', length: 255})[m
+[32m+[m[32m    description: string;[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    @Column({type: 'varchar', length: 50})[m
+[32m+[m[32m    serialNumber: string;[m
+[32m+[m[32m}[m
+[1mdiff --git a/apps/api/src/modules/ticket/ticket.controller.ts b/apps/api/src/modules/ticket/ticket.controller.ts[m
+[1mindex 4866e4f..c413fe2 100644[m
+[1m--- a/apps/api/src/modules/ticket/ticket.controller.ts[m
+[1m+++ b/apps/api/src/modules/ticket/ticket.controller.ts[m
+[36m@@ -1,4 +1,45 @@[m
+[31m-import { Controller } from '@nestjs/common';[m
+[32m+[m[32mimport { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';[m
+[32m+[m[32mimport { TicketService } from './ticket.service';[m
+[32m+[m[32mimport { Authorize } from '../auth/auth.decorator';[m
+[32m+[m[32mimport { UserRole } from '@musat/core';[m
+[32m+[m[32mimport { Ticket } from './models/ticket.entity';[m
+[32m+[m[32mimport { TicketCreateDto } from './dtos/ticket-create.dto';[m
+ [m
+ @Controller('tickets')[m
+[31m-export class TicketController {}[m
+[32m+[m[32mexport class TicketController {[m
+[32m+[m[32m    constructor(private readonly ticketService: TicketService,[m
+[32m+[m[32m    ){}[m
+[32m+[m
+[32m+[m[32m    @Get()[m
+[32m+[m[32m    @Authorize(UserRole.ADMIN)[m
+[32m+[m[32m    @Authorize(UserRole.TECHNICIAN)[m
+[32m+[m[32m    async getAll(){[m
+[32m+[m[32m        return Ticket.find();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Get(':id')[m
+[32m+[m[32m    async getOne(@Param('id') id: string){[m
+[32m+[m[32m        return Ticket.findOneOrFail([m
+[32m+[m[32m            { where: {id} }[m
+[32m+[m[32m        )[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Post()[m
+[32m+[m[32m    async create(@Body() ticketDto: TicketCreateDto){[m
+[32m+[m[32m        return this.ticketService.create(ticketDto);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Patch()[m
+[32m+[m[32m    async update([m
+[32m+[m[32m        @Param('id') id: string,[m
+[32m+[m[32m        @Body() updateTicketDto: Ticket[m
+[32m+[m[32m    ){[m
+[32m+[m[32m        return this.ticketService.update(id, updateTicketDto);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /*[m
+[32m+[m[32m    @Delete(':id')[m
+[32m+[m[32m    async delete(){[m
+[32m+[m
+[32m+[m[32m    }*/[m
+[32m+[m[32m}[m
+[1mdiff --git a/apps/api/src/modules/ticket/ticket.module.ts b/apps/api/src/modules/ticket/ticket.module.ts[m
+[1mindex ccfbe26..544e3
