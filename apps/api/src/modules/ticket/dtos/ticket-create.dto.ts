@@ -24,6 +24,5 @@ export class TicketCreateDto {
     @IsNotEmpty()
     serialNumber: string;
 
-    @IsNotEmpty()
     createdAt: Date;
 }

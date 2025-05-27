@@ -44,3 +44,22 @@ export const IsStrongPassword = (validationOptions?: ValidationOptions) => {
     });
   };
 };
+
+export const IsTechnician= (validationOptions?: ValidationOptions) => {
+  return (object: object, propertyName: string) => {
+    registerDecorator({
+      target: object.constructor,
+      propertyName,
+      options: {
+        message: '$property is not a technician',
+        ...validationOptions,
+      },
+      constraints: [],
+      validator: {
+        validate(value: any) {
+          return value?.roles?.some((role: any) => role.name === 'technician');
+        },
+      },
+    });
+  };
+}

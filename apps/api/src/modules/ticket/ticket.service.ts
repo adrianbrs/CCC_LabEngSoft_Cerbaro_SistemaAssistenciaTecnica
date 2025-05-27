@@ -40,7 +40,7 @@ export class TicketService {
 
             // 🔹 Busca produto
             const product = await manager.findOneOrFail(Product, {
-                where: {  },
+                where: { model: productDto.model },
             });
 
             const technician = await this.technicianAssignmentService.assignTechnician();
@@ -62,7 +62,7 @@ export class TicketService {
         });
     }
 
-
+/*
     async update(ticketId: Ticket['id'], updates: TicketUpdateDto): Promise<TicketDto> {
         this.logger.log(`Updating ticket ${ticketId}`);
 
@@ -76,5 +76,5 @@ export class TicketService {
 
         return ticket.save();
     }
-
+*/
 }
