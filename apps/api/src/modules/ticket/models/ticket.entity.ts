@@ -2,18 +2,18 @@ import { Product } from '@/modules/product/models/product.entity';
 import { User } from '@/modules/user/models/user.entity';
 import { CoreEntity } from '@/shared/core.entity';
 import { ITicketEntity, TicketStatus } from '@musat/core';
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 
 @Entity()
 export class Ticket extends CoreEntity implements ITicketEntity {
   @Column({ type: 'varchar', length: 1000 })
   description: string;
 
-  @OneToOne(() => User, { eager: true })
+  @ManyToOne(() => User, { eager: true })
   @JoinColumn()
   technician: User;
 
-  @OneToOne(() => Product, { eager: true })
+  @ManyToOne(() => Product, { eager: true })
   @JoinColumn()
   product: Product;
 
@@ -27,7 +27,7 @@ export class Ticket extends CoreEntity implements ITicketEntity {
   @Column({ type: 'varchar', length: 500 })
   serialNumber: string;
 
-  @OneToOne(() => User, { eager: true })
+  @ManyToOne(() => User, { eager: true })
   @JoinColumn()
   client: User;
 

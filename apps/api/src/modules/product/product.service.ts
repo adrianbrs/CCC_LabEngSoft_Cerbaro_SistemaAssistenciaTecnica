@@ -70,4 +70,17 @@ export class ProductService {
 
         return product.save();
     }
+
+    async delete(productId: Product['id']): Promise<void> {
+        this.logger.log(`Deleting product with ID: ${productId}`);
+    
+        const product = await Product.findOneOrFail({
+          where: {
+            id: productId
+          }
+        });
+        await product.remove();
+        this.logger.log(`Product with ID: ${productId} deleted`);
+    
+      }
 }

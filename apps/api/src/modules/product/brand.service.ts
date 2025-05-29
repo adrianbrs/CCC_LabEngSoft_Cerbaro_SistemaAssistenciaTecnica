@@ -49,4 +49,16 @@ export class BrandService {
 
     return brand.save();
   }
+
+  async delete(brandId: Brand['id']): Promise<void> {
+    this.logger.log(`Deleting brand with ID: ${brandId}`);
+
+    const brand = await Brand.findOneOrFail({
+      where: {
+        id: brandId
+      }
+    });
+    await brand.remove();
+    this.logger.log(`Brand with ID: ${brandId} deleted`);
+  }
 }

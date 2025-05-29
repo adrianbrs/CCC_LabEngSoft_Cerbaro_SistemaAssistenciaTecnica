@@ -1,11 +1,11 @@
 import { AddressDto } from "@/modules/address/dtos/address.dto";
-import { User } from "../models/user.entity";
+import { UserRole } from "@musat/core";
 
 export class UserDto {
     name: string;
     email: string;
     phone: string;
-    role: User['role'];
+    role: UserRole;
     cpf: string;
     address: AddressDto;
 }

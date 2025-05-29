@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { BrandService } from './brand.service';
 import { BrandDto } from './dtos/brand.dto';
 import { BrandUpdateDto } from './dtos/brand-update.dto';
@@ -25,5 +25,10 @@ export class BrandController {
   @Authorize(UserRole.ADMIN)
   async update(@Body() brandDto: BrandUpdateDto, @Param('id') id: string) {
     return this.brandService.update(id, brandDto);
+  }
+
+  @Delete('/id')
+  async delete(@Param('id') id: string){
+    return this.brandService.delete(id);
   }
 }

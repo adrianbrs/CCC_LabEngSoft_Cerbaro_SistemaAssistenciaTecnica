@@ -1,53 +1,105 @@
 import { Logger, UnauthorizedException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { Ticket } from './models/ticket.entity';
-import { TechnicianAssignmentService } from './technicianAssignment.service';
 import { TicketCreateDto } from './dtos/ticket-create.dto';
 import { User } from '../user/models/user.entity';
 import { Product } from '../product/models/product.entity';
 import { TicketUpdateDto } from './dtos/ticket-update.dto';
 import { TicketDto } from './dtos/ticket.dto';
 import { isAuthorized, UserRole } from '@musat/core';
+import { UserDto } from '../user/dtos/user.dto';
 
 export class TicketService {
   private readonly logger = new Logger(TicketService.name);
 
   constructor(
     private readonly ds: DataSource,
-    private readonly technicianAssignmentService: TechnicianAssignmentService,
-  ) {}
+  ) { }
+
+  async getAll() {
+    return Ticket.find();
+  }
 
   /**
-   * Function to create a ticket, assign a technician to it automatically
-   */
+ * Function to create a ticket and assign a technician to it automatically
+ */
   async create(client: User, ticketDto: TicketCreateDto): Promise<Ticket> {
-    this.logger.log(`${client.id} is creating a ticket`);
+    this.logger.log('Creating ticket');
 
-    const { productId, serialNumber, description } = ticketDto;
+    const { productId, ...ticketData } = ticketDto;
 
-    const product = await Product.findOneOrFail({ where: { id: productId } });
+    // Busca produto pelo ID
+    const product = await Product.findOneOrFail({
+      where: { id: productId },
+    });
 
-    const technician =
-      await this.technicianAssignmentService.assignTechnician();
+    this.logger.log(product)
 
-    if (!technician) {
+    // Assignment de técnico via Round Robin
+    const technicians = await User.find({
+      where: {
+        role: UserRole.TECHNICIAN, // Filtra apenas usuários com a função de técnico
+      }
+    });
+    this.logger.log(technicians);
+
+
+    if (technicians.length === 0) {
       throw new Error('No technician available');
     }
 
-    const ticket = Ticket.create({
-      client,
-      technician,
-      description,
-      product,
-      serialNumber,
+    const [lastTicket] = await Ticket.find({
+      order: { createdAt: 'DESC' },
+      relations: ['technician'],
+      take: 1,
     });
 
+
+
+    this.logger.log(lastTicket)
+
+    let technician: User;
+
+    if (!lastTicket || !lastTicket.technician) {
+      technician = technicians[0];
+    } else {
+      const lastTechnicianIndex = technicians.findIndex(
+        (tech) => tech.id === lastTicket.technician.id,
+      );
+
+      const nextTechnicianIndex =
+        (lastTechnicianIndex + 1) % technicians.length;
+
+      technician = technicians[nextTechnicianIndex];
+    }
+
+    this.logger.log(technician);
+
+    //Criação do ticket
+    const ticket = Ticket.create({
+      ...ticketData,
+      client,
+      product,
+      technician,
+    });
+
+    this.logger.log(ticket);
+
+    await Ticket.save(ticket);
+
     this.logger.log(
-      `Ticket ${ticket.id} created by ${client.id} and assigned to ${technician.name}`,
+      `Ticket ${ticket.id} created and assigned to technician ${technician.name}`,
     );
 
-    return ticket.save();
+    return ticket;
   }
+
+
+
+  /**
+   * Function to update a ticket's status attribute.
+   * Accessible only to technicians and admins
+   */
 
   async update(
     technician: User,
@@ -72,5 +124,18 @@ export class TicketService {
     Ticket.merge(ticket, { ...updates });
 
     return ticket.save();
+  }
+
+  async delete(ticketId: Ticket['id']): Promise<void> {
+    this.logger.log(`Deleting ticket with ID: ${ticketId}`);
+
+    const ticket = await Ticket.findOneOrFail({
+      where: {
+        id: ticketId
+      }
+    });
+    await ticket.remove();
+    this.logger.log(`Ticket with ID: ${ticketId} deleted`);
+
   }
 }
