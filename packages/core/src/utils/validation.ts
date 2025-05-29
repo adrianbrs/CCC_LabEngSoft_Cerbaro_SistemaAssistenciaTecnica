@@ -32,3 +32,14 @@ export const isStrongPassword = (value: string) => {
     minSymbols: 1,
   });
 };
+
+export const isTechnician = (user: any) => {
+  return user?.roles?.some((role: any) => role.name === "technician");
+}
+/*
+export const isClient = (user: any) => {
+  return user?.roles?.some((role: any) => role.name === "client");
+}
+export const isAdmin = (user: any) => {
+  return user?.roles?.some((role: any) => role.name === "admin");
+}*/

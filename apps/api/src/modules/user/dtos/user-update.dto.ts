@@ -1,6 +1,7 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { UserRegisterDto } from './user-register.dto';
 import {
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   ValidateIf,
@@ -8,6 +9,7 @@ import {
 } from 'class-validator';
 import { AddressUpdateDto } from '../../address/dtos/address-update.dto';
 import { Type } from 'class-transformer';
+import { UserRole } from '@musat/core';
 
 export class UserUpdateDto extends PartialType(
   OmitType(UserRegisterDto, ['cpf', 'address'] as const),
@@ -22,4 +24,9 @@ export class UserUpdateDto extends PartialType(
   @ValidateNested()
   @Type(() => AddressUpdateDto)
   address?: AddressUpdateDto;
+/*
+  @IsOptional()
+  @IsEnum(UserRole)
+  role: UserRole;*/
+
 }

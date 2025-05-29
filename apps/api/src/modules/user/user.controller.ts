@@ -12,13 +12,20 @@ import { User } from './models/user.entity';
 import { UserVerifyDto } from './dtos/user-verify.dto';
 import { UserRegisterDto } from './dtos/user-register.dto';
 import { UserService } from './user.service';
-import { LoggedUser, Public } from '../auth/auth.decorator';
+import { Authorize, LoggedUser, Public } from '../auth/auth.decorator';
 import { UserUpdateDto } from './dtos/user-update.dto';
 import { UserDeactivateDto } from './dtos/user-deactivate.dto';
+import { UserRole } from '@musat/core';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get()
+  @Authorize(UserRole.ADMIN)
+  async getAll() {
+    return User.find();
+  }
 
   /**
    * Verifies a user's email address using the provided token.
