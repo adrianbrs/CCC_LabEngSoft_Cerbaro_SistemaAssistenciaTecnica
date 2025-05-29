@@ -8,6 +8,6 @@ import { TechnicianAssignment } from './models/technicianAssignment.entity';
 @Module({
   imports: [TypeOrmModule.forFeature([Ticket, TechnicianAssignment])],
   controllers: [TicketController],
-  providers:[TicketService]
+  providers: [TicketService],
 })
 export class TicketModule {}

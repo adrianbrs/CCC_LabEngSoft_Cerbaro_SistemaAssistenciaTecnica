@@ -1,4 +1,7 @@
-import { PartialType } from "@nestjs/swagger";
-import { TicketDto } from "./ticket.dto";
+import { TicketStatus } from '@musat/core';
+import { IsEnum } from 'class-validator';
 
-export class TicketUpdateDto extends PartialType(TicketDto){}
+export class TicketUpdateDto {
+  @IsEnum(TicketStatus)
+  status: TicketStatus;
+}

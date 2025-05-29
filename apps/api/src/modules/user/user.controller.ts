@@ -23,7 +23,7 @@ export class UserController {
 
   @Get()
   @Authorize(UserRole.ADMIN)
-  async getAll(){
+  async getAll() {
     return User.find();
   }
 
