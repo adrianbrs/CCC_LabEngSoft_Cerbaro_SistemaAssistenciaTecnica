@@ -245,4 +245,12 @@ export class UserService {
       this.logger.log(`User ${user.id} deactivated`);
     });
   }
+
+  async getOne(userId: User['id']){
+    return User.findOneOrFail({
+      where: {
+        id: userId
+      }
+    })
+  }
 }

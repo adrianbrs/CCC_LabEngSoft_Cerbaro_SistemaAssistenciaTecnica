@@ -27,6 +27,11 @@ export class UserController {
     return User.find();
   }
 
+  @Get(':id')
+  async getOne(@Param('id') id: string){
+    return this.userService.getOne(id);
+  }
+
   /**
    * Verifies a user's email address using the provided token.
    */

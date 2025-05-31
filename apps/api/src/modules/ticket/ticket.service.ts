@@ -20,6 +20,14 @@ export class TicketService {
     return Ticket.find();
   }
 
+  async getOne(ticketId: Ticket['id']){
+    return Ticket.findOneOrFail({
+      where: {
+        id: ticketId
+      }
+    });
+  }
+
   /**
  * Function to create a ticket and assign a technician to it automatically
  */

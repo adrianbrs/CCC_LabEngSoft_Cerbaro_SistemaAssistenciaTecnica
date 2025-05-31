@@ -9,7 +9,6 @@ import {
 } from 'class-validator';
 import { AddressUpdateDto } from '../../address/dtos/address-update.dto';
 import { Type } from 'class-transformer';
-import { UserRole } from '@musat/core';
 
 export class UserUpdateDto extends PartialType(
   OmitType(UserRegisterDto, ['cpf', 'address'] as const),
