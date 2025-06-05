@@ -3,6 +3,8 @@ import { ReviewService } from "./review.service";
 import { ReviewUpdateDto } from "./dtos/review-update.dto";
 import { Review } from "./models/review.entity";
 import { UserDto } from "../user/dtos/user.dto";
+import { LoggedUser } from "../auth/auth.decorator";
+import { User } from "../user/models/user.entity";
 
 @Controller('reviews')
 export class ReviewController {
@@ -44,17 +46,13 @@ export class ReviewController {
      * 
      */
     @Get('/technician/:techId')
-    async getByTechnician(
-        @Param('techId') techId: string
-    ){
+    async getByTechnician(@Param('techId') techId: string){
         return this.reviewService.getByTechnician(techId);
     }
 
     @Post()
-    async create(
-        @Param('ticketId') ticketId: string,
-    ){
-        return this.reviewService.create(ticketId);
+    async create(@LoggedUser() user:User, @Param('ticketId') ticketId: string){
+        return this.reviewService.create(ticketId, user);
     }
 
     @Patch(':id')

@@ -2,6 +2,8 @@ import { Injectable, Logger } from "@nestjs/common";
 import { CategoryDto } from "./dtos/category.dto";
 import { Category } from "./models/category.entity";
 import { CategoryUpdateDto } from "./dtos/category-update.dto";
+import { CategoryFiltersDto } from "./dtos/category-filters.dto";
+import { ILike } from "typeorm";
 
 @Injectable()
 export class CategoryService{
@@ -9,6 +11,18 @@ export class CategoryService{
 
     constructor(){
         this.logger.log('CategoryService initialized');
+    }
+
+    async getAll(filters?: CategoryFiltersDto): Promise<CategoryDto[]>{
+        this.logger.log(`Fetching all categories`, filters);
+        const categories = await Category.find({
+            where: {
+                ...(filters?.name && {
+                    name: ILike(`%${filters.name}%`)
+                }),
+            },
+        });
+        return categories;
     }
 
     async getCategoryById(categoryId: Category['id']): Promise<CategoryDto> {

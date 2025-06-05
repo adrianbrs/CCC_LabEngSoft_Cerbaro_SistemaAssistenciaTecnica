@@ -27,22 +27,27 @@ export class ReviewService {
         })
     }
 
-    async create(ticketId: Ticket['id']){
+    async create(ticketId: Ticket['id'], user: User) {
         const ticket = await this.ticketService.getOne(ticketId);
 
         if (!ticket) {
             throw new Error('Ticket not found');
         }
 
+        if (ticket.client.id !== user.id) {
+            throw new Error('You are not authorized to review this ticket');
+        }
+
         const review = Review.create({
             ticket: ticket,
             client: ticket.client,
-            stars: 0, // Default value
+            stars: 1,
             description: ''
         });
 
         return review.save();
     }
+
 
     async getByClient(userId: User['id']) {
         return Review.find({

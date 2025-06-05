@@ -3,6 +3,7 @@ import { ProductService } from './product.service';
 import { Product } from './models/product.entity';
 import { ProductDto } from './dtos/product.dto';
 import { ProductUpdateDto } from './dtos/product-update.dto';
+import { ProductFiltersDto } from './dtos/product-filters.dto';
 
 @Controller('products')
 export class ProductController {
@@ -10,8 +11,8 @@ export class ProductController {
     constructor(private readonly productService: ProductService) {}
 
     @Get()
-    async getAll(){
-        return Product.find();
+    async getAll(@Param() filters: ProductFiltersDto){
+        return this.productService.getAll(filters);
     }
 
     @Get(':id')
