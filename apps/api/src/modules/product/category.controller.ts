@@ -11,14 +11,15 @@ import { CategoryUpdateDto } from './dtos/category-update.dto';
 import { CategoryDto } from './dtos/category.dto';
 import { CategoryService } from './category.service';
 import { Category } from './models/category.entity';
+import { CategoryFiltersDto } from './dtos/category-filters.dto';
 
 @Controller('categories')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Get()
-  async getAll() {
-    return Category.find();
+  async getAll(@Param() filters: CategoryFiltersDto) {
+    return this.categoryService.getAll(filters);
   }
 
   @Get(':id')

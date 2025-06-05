@@ -16,15 +16,36 @@ import { Authorize, LoggedUser, Public } from '../auth/auth.decorator';
 import { UserUpdateDto } from './dtos/user-update.dto';
 import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 import { UserRole } from '@musat/core';
+import { UserRoleUpdateDto } from './dtos/userRole-update.dto';
+import { TicketService } from '../ticket/ticket.service';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService
+  ) { }
 
   @Get()
   @Authorize(UserRole.ADMIN)
   async getAll() {
     return User.find();
+  }
+
+  @Get('/admins')
+  @Authorize(UserRole.ADMIN)
+  async getAdmins(){
+    return this.userService.getAdmins();
+  }
+
+  @Get('/technicians')
+  @Authorize(UserRole.ADMIN)
+  async getTechnicians(){
+    return this.userService.getTechnicians();
+  }
+
+  @Get('/clients')
+  @Authorize(UserRole.ADMIN)
+  async getClients(){
+    return this.userService.getClients();
   }
 
   /**
@@ -75,5 +96,22 @@ export class UserController {
     @Body() userDeactivateDto: UserDeactivateDto,
   ) {
     return this.userService.deactivate(user, userDeactivateDto);
+  }
+
+  /**
+   * Allows admins to change a user's role   * 
+   */
+  @Patch(':id')
+  @Authorize(UserRole.ADMIN)
+  updateRole(
+    @Param('id') userId: string,
+    @Body() userRoleUpdateDto: UserRoleUpdateDto
+  ) {
+    return this.userService.updateRole(userId, userRoleUpdateDto);
+  }
+
+  @Get(':id')
+  async getOne(@Param('id') id: string) {
+    return this.userService.getOne(id);
   }
 }

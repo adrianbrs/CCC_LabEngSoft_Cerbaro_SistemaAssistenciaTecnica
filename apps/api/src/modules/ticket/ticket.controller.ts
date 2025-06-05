@@ -10,21 +10,29 @@ import { Ticket } from './models/ticket.entity';
 export class TicketController {
   constructor(private readonly ticketService: TicketService) { }
 
+  /**
+   * Returns all tickets 
+   */
   @Get()
   async getAll() {
     return this.ticketService.getAll();
   }
 
-  /*
-  @Get()
-  async getMyTicketsClient(){
-
+  /**
+   * Returns all the tickets created by the logged user
+   */
+  @Get('me/tickets')
+  async getMyTickets(@LoggedUser() user: User) {
+    return this.ticketService.getMyTickets(user);
   }
 
-  @Get()
-  async getMyTicketsTechnician(){
-
-  }*/
+  /**
+   * Returns all the tickets assigned to the logged technician
+   */
+  @Get('me/technician/tickets')
+  async getMyTicketsTechnician(@LoggedUser() user: User){
+    return this.ticketService.getMyTicketsTechnician(user);
+  }
 
   @Post()
   async create(@LoggedUser() client: User, @Body() createDto: TicketCreateDto) {

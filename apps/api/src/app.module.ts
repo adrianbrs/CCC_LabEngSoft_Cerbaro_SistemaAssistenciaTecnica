@@ -11,6 +11,7 @@ import { CsrfModule } from './modules/csrf/csrf.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AddressModule } from './modules/address/address.module';
 import { SharedModule } from './modules/shared/shared.module';
+import { ReviewModule } from './modules/review/review.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { SharedModule } from './modules/shared/shared.module';
     AuthModule,
     CsrfModule,
     AddressModule,
+    ReviewModule,
     SharedModule,
   ],
   providers: [

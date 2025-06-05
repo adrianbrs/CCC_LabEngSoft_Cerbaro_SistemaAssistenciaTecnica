@@ -4,7 +4,8 @@ import { Product } from "./models/product.entity";
 import { ProductUpdateDto } from "./dtos/product-update.dto";
 import { Brand } from "./models/brand.entity";
 import { Category } from "./models/category.entity";
-import { DataSource } from "typeorm";
+import { DataSource, ILike } from "typeorm";
+import { ProductFiltersDto } from "./dtos/product-filters.dto";
 
 @Injectable()
 export class ProductService {
@@ -13,6 +14,20 @@ export class ProductService {
     constructor(private readonly ds: DataSource) {
         this.logger.log('ProductService initialized');
         
+    }
+
+    async getAll(filters?: ProductFiltersDto): Promise<ProductDto[]>{
+        this.logger.log(`Fetching all products`, filters);
+
+        const products = await Product.find({
+                where: {
+                    ...(filters?.model && {
+                        model: ILike(`%${filters.model}%`)
+                    }),
+                },
+            });
+
+        return products;
     }
 
     async create(productDto: ProductDto): Promise<Product> {

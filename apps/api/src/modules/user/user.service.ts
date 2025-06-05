@@ -1,5 +1,5 @@
 import { MailgunMessageData, MailgunService } from '@/lib/mailgun';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { User } from './models/user.entity';
 import { AccountAlreadyVerifiedError } from './errors/account-already-verified.error';
 import { MissingVerificationTokenError } from './errors/missing-verification-token.error';
@@ -20,17 +20,19 @@ import { UserUpdateDto } from './dtos/user-update.dto';
 import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 import { Messages } from '@/constants/messages';
 import { AccountVerificationError } from './errors/account-verification.error';
+import { UserRoleUpdateDto } from './dtos/userRole-update.dto';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 
 @Injectable()
 export class UserService {
+
   private readonly logger = new Logger(UserService.name);
 
   constructor(
     private readonly mailgun: MailgunService,
-    private readonly ds: DataSource,
-  ) {}
+    private readonly ds: DataSource
+  ) { }
 
   async sendEmail(user: User, data: MailgunMessageData) {
     return this.mailgun.send({
@@ -71,6 +73,33 @@ export class UserService {
       data: {
         name: user.name,
         verification_url: url.toString(),
+      },
+    });
+  }
+
+  async sendTicketAssignedEmail(user: User){
+    return this.sendTemplateEmail(user, 'ticket_assigned', {
+      subject: Messages.user.email.newTicketAssignSubject,
+      data:{
+        name: user.name,
+      },
+    });
+  }
+
+  async sendTicketUpdateEmail(user: User){
+    return this.sendTemplateEmail(user, 'ticket_updated', {
+      subject: Messages.user.email.ticketUpdatedSubject,
+      data:{
+        name: user.name,
+      },
+    });
+  }
+
+  async sendRoleChangedEmail(user: User){
+    return this.sendTemplateEmail(user, 'role_changed', {
+      subject: Messages.user.email.roleChangeSubject,
+      data:{
+        name: user.name,
       },
     });
   }
@@ -223,6 +252,27 @@ export class UserService {
     });
   }
 
+  async updateRole(userId: User['id'], userRoleUpdateDto: UserRoleUpdateDto): Promise<User> {
+    this.logger.log(`Updating role for user ${userId}`);
+
+    const user = await User.findOneOrFail({
+      where: {
+        id: userId,
+      },
+    });
+
+    user.role = userRoleUpdateDto.role;
+
+    await user.save();
+
+    this.logger.log(`Role for user ${userId} updated to ${user.role}`);
+
+    await this.sendRoleChangedEmail(user);
+
+    return user;
+
+  }
+
   async deactivate(user: User, dto: UserDeactivateDto): Promise<void> {
     this.logger.log(`Deactivating user ${user.id}`);
 
@@ -243,6 +293,37 @@ export class UserService {
       });
 
       this.logger.log(`User ${user.id} deactivated`);
+    });
+  }
+
+  async getOne(userId: User['id']): Promise<User> {
+    return User.findOneOrFail({
+      where: {
+        id: userId
+      }
+    });
+  }
+
+  async getTechnicians(): Promise<User[]>{
+    return User.find({
+      where:{
+        role: UserRole.TECHNICIAN,
+      }
+    });
+  }
+
+  async getClients(): Promise<User[]>{
+    return User.find({
+      where:{
+        role: UserRole.CLIENT,
+      }
+    });
+  }
+  async getAdmins(): Promise<User[]>{
+    return User.find({
+      where:{
+        role: UserRole.ADMIN,
+      }
     });
   }
 }
