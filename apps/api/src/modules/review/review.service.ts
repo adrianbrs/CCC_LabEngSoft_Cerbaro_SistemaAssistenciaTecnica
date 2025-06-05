@@ -1,49 +1,45 @@
-import { Injectable } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Review } from "./models/review.entity";
 import { ReviewUpdateDto } from "./dtos/review-update.dto";
 import { ReviewDto } from "./dtos/review.dto";
 import { User } from "../user/models/user.entity";
 import { Ticket } from "../ticket/models/ticket.entity";
-import { Category } from "../product/models/category.entity";
-import { Brand } from "../product/models/brand.entity";
-import { Product } from "../product/models/product.entity";
 import { TicketService } from "../ticket/ticket.service";
+import { UserService } from "../user/user.service";
+import { ReviewCreateDto } from "./dtos/review-create.dto";
+import { TicketStatus } from "@musat/core";
 
 @Injectable()
 export class ReviewService {
 
-    constructor(private readonly ticketService: TicketService) { }
-
+    constructor(
+        @Inject(forwardRef(() => TicketService))
+        private readonly ticketService: TicketService,
+        private readonly userService: UserService
+    ) { }
 
     async getAll() {
         return Review.find();
     }
 
-    async getOne(reviewId: Review['id']) {
-        return Review.findOneOrFail({
+    async create(ticketId: Ticket['id'], user: User, reviewDto: ReviewCreateDto): Promise<ReviewDto> {
+        const ticket = await Ticket.findOneOrFail({
             where: {
-                id: reviewId
-            }
-        })
-    }
+                id: ticketId
+            },
+        });
 
-    async create(ticketId: Ticket['id'], user: User) {
-        const ticket = await this.ticketService.getOne(ticketId);
+        console.log("TICKET ID: " + ticket.id + "\n VAMO TESTAR userID \n " + user.id + "\n VAMO TESTAR TICKET.CLIENT \n " + ticket.client.id);
 
-        if (!ticket) {
-            throw new Error('Ticket not found');
-        }
-
-        if (ticket.client.id !== user.id) {
+        if (ticket.client.id !== user.id || ticket.status !== TicketStatus.RESOLVED) {
             throw new Error('You are not authorized to review this ticket');
         }
 
         const review = Review.create({
+            ...reviewDto,
             ticket: ticket,
-            client: ticket.client,
-            stars: 1,
-            description: ''
-        });
+            client: user
+        })
 
         return review.save();
     }
@@ -56,7 +52,7 @@ export class ReviewService {
                     id: userId
                 }
             }
-        })
+        });
     }
 
     async getByTechnician(ticketId: Ticket['id']) {
@@ -69,6 +65,16 @@ export class ReviewService {
                     technician: {
                         id: ticket.technician.id
                     }
+                }
+            }
+        });
+    }
+
+    async getByTicket(ticketId: Ticket['id']) {
+        return Review.findOne({
+            where: {
+                ticket: {
+                    id: ticketId
                 }
             }
         });

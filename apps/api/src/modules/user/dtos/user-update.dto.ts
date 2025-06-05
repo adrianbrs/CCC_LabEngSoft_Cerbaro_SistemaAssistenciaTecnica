@@ -23,9 +23,5 @@ export class UserUpdateDto extends PartialType(
   @ValidateNested()
   @Type(() => AddressUpdateDto)
   address?: AddressUpdateDto;
-/*
-  @IsOptional()
-  @IsEnum(UserRole)
-  role: UserRole;*/
 
 }
