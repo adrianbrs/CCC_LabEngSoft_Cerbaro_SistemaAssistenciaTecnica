@@ -43,6 +43,7 @@ type FormData = z.output<typeof schema>;
 const { login } = useUserSession();
 const router = useRouter();
 const toast = useToast();
+const form = useTemplateRef("form");
 const passwordInput = useTemplateRef("passwordInput");
 const isSubmitting = ref(false);
 const hasError = ref(false);
@@ -66,7 +67,30 @@ const onSubmit = async ({
     router.replace(redirectPath.value);
   } catch (err) {
     if (err instanceof FetchError) {
-      if (err.response?.status === 400) {
+      if (err.response?._data?.code === "ACCOUNT_NOT_VERIFIED") {
+        toast.add({
+          color: "error",
+          title: "Conta não verificada",
+          description:
+            "Você precisa verificar seu e-mail antes de fazer login.",
+          duration: 8000,
+          close: true,
+        });
+
+        form?.value?.setErrors(
+          [
+            {
+              name: "email",
+              message: "Endereço de e-mail não verificado",
+            },
+          ],
+          "email"
+        );
+
+        return;
+      }
+
+      if (err.response?.status === 401) {
         toast.add({
           color: "error",
           title: "Credenciais inválidas",
@@ -106,6 +130,7 @@ const onSubmit = async ({
     </template>
 
     <UForm
+      ref="form"
       class="space-y-4"
       :schema="schema"
       :state="state"

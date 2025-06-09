@@ -2,11 +2,9 @@
 
 <template>
   <header
-    class="bg-default/75 backdrop-blur border-b border-default sticky top-0 z-50 h-(--ui-header-height)"
+    class="bg-default/75 backdrop-blur border-b border-default sticky top-0 z-100 h-(--ui-header-height)"
   >
-    <div
-      class="w-full max-w-(--ui-container) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 h-full"
-    >
+    <UContainer class="flex items-center justify-between gap-3 h-full">
       <div class="lg:flex-1 min-w-0 flex items-center gap-3">
         <slot name="navButton" />
 
@@ -19,7 +17,7 @@
         <AccountNotifications />
         <AccountMenu />
       </div>
-    </div>
+    </UContainer>
   </header>
 </template>
 

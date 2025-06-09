@@ -1,5 +1,5 @@
 import { MailgunMessageData, MailgunService } from '@/lib/mailgun';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { User } from './models/user.entity';
 import { AccountAlreadyVerifiedError } from './errors/account-already-verified.error';
 import { MissingVerificationTokenError } from './errors/missing-verification-token.error';
@@ -26,13 +26,12 @@ const VERIFICATION_TOKEN_LENGTH = 16;
 
 @Injectable()
 export class UserService {
-
   private readonly logger = new Logger(UserService.name);
 
   constructor(
     private readonly mailgun: MailgunService,
-    private readonly ds: DataSource
-  ) { }
+    private readonly ds: DataSource,
+  ) {}
 
   async sendEmail(user: User, data: MailgunMessageData) {
     return this.mailgun.send({
@@ -77,28 +76,28 @@ export class UserService {
     });
   }
 
-  async sendTicketAssignedEmail(user: User){
+  async sendTicketAssignedEmail(user: User) {
     return this.sendTemplateEmail(user, 'ticket_assigned', {
       subject: Messages.user.email.newTicketAssignSubject,
-      data:{
+      data: {
         name: user.name,
       },
     });
   }
 
-  async sendTicketUpdateEmail(user: User){
+  async sendTicketUpdateEmail(user: User) {
     return this.sendTemplateEmail(user, 'ticket_updated', {
       subject: Messages.user.email.ticketUpdatedSubject,
-      data:{
+      data: {
         name: user.name,
       },
     });
   }
 
-  async sendRoleChangedEmail(user: User){
+  async sendRoleChangedEmail(user: User) {
     return this.sendTemplateEmail(user, 'role_changed', {
       subject: Messages.user.email.roleChangeSubject,
-      data:{
+      data: {
         name: user.name,
       },
     });
@@ -204,17 +203,15 @@ export class UserService {
     return this.ds.transaction(async (manager) => {
       const {
         address: addressData,
-        email,
         password,
-        confirmPassword,
+        currentPassword,
         ...userData
       } = updates;
-      const emailChanged = email && email !== user.email;
 
-      if (email || password) {
+      if (password) {
         if (
-          !confirmPassword ||
-          !(await user.comparePassword(confirmPassword))
+          !currentPassword ||
+          !(await user.comparePassword(currentPassword))
         ) {
           this.logger.warn(
             `Invalid password confirmation during update of user ${user.id}`,
@@ -229,22 +226,12 @@ export class UserService {
 
       User.merge(user, {
         ...userData,
-        ...(email && { email }),
         ...(password && {
           password: await User.hashPassword(password),
         }),
       });
 
-      if (emailChanged) {
-        user.verificationToken = generateHexToken(VERIFICATION_TOKEN_LENGTH);
-        user.verifiedAt = null;
-      }
-
       await manager.save(user);
-
-      if (emailChanged) {
-        await this.sendVerificationEmail(user);
-      }
 
       this.logger.log(`User ${user.id} updated`);
 
@@ -252,7 +239,10 @@ export class UserService {
     });
   }
 
-  async updateRole(userId: User['id'], userRoleUpdateDto: UserRoleUpdateDto): Promise<User> {
+  async updateRole(
+    userId: User['id'],
+    userRoleUpdateDto: UserRoleUpdateDto,
+  ): Promise<User> {
     this.logger.log(`Updating role for user ${userId}`);
 
     const user = await User.findOneOrFail({
@@ -270,7 +260,6 @@ export class UserService {
     await this.sendRoleChangedEmail(user);
 
     return user;
-
   }
 
   async deactivate(user: User, dto: UserDeactivateDto): Promise<void> {
@@ -299,31 +288,31 @@ export class UserService {
   async getOne(userId: User['id']): Promise<User> {
     return User.findOneOrFail({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     });
   }
 
-  async getTechnicians(): Promise<User[]>{
+  async getTechnicians(): Promise<User[]> {
     return User.find({
-      where:{
+      where: {
         role: UserRole.TECHNICIAN,
-      }
+      },
     });
   }
 
-  async getClients(): Promise<User[]>{
+  async getClients(): Promise<User[]> {
     return User.find({
-      where:{
+      where: {
         role: UserRole.CLIENT,
-      }
+      },
     });
   }
-  async getAdmins(): Promise<User[]>{
+  async getAdmins(): Promise<User[]> {
     return User.find({
-      where:{
+      where: {
         role: UserRole.ADMIN,
-      }
+      },
     });
   }
 }

@@ -10,6 +10,7 @@ export enum UserRole {
 export interface IUserEntity extends ICoreEntity {
   name: string;
   email: string;
+  cpf: string;
   password?: string;
   role: UserRole;
   phone: string;

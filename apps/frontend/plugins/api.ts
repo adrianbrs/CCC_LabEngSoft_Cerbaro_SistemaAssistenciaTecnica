@@ -1,5 +1,11 @@
 import { CSRF_HEADER_NAME } from "@musat/core";
 
+export interface ApiErrorResponse {
+  code?: string;
+  message?: string | string[];
+  error?: string;
+}
+
 export default defineNuxtPlugin(async (nuxtApp) => {
   let csrfToken: string | null = null;
 

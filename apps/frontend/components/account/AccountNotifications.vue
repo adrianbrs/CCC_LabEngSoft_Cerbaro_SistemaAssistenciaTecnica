@@ -3,7 +3,7 @@
     <UButton
       variant="soft"
       color="neutral"
-      size="lg"
+      size="xl"
       icon="i-lucide-bell"
       class="cursor-pointer"
     />

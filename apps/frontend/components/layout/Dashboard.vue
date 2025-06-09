@@ -26,7 +26,7 @@ const navOpen = ref(false);
     </template>
   </LayoutNavbar>
 
-  <UContainer>
+  <UContainer class="max-md:!px-0">
     <LayoutAsideMenu v-model:open="navOpen">
       <main id="content" class="min-h-(--ui-content-height)">
         <slot />

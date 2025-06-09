@@ -16,7 +16,9 @@ defineProps<{
     </slot>
 
     <slot name="content">
-      <div class="md:pl-4 py-4">
+      <LayoutBreadcrumbs />
+
+      <div class="p-4 sm:p-6 lg:p-8">
         <slot />
       </div>
     </slot>

@@ -6,7 +6,7 @@ export class InvalidCredentialsError extends ApiError {
     super(
       'INVALID_CREDENTIALS',
       'Invalid credentials provided',
-      HttpStatus.BAD_REQUEST,
+      HttpStatus.UNAUTHORIZED,
     );
   }
 }

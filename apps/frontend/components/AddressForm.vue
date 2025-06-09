@@ -1,32 +1,16 @@
-<script lang="ts">
-import type { ICepInfoEntity } from "@musat/core";
-import { z } from "zod";
-
-const addressSchema = z.object({
-  street: z.string().min(3, "A rua deve ter pelo menos 3 caracteres").max(100),
-  number: z.string().max(10).optional(),
-  neighborhood: z
-    .string()
-    .min(3, "O bairro deve ter pelo menos 3 caracteres")
-    .max(100),
-  complement: z.string().max(255).optional(),
-  city: z.string().min(3, "A cidade deve ter pelo menos 3 caracteres").max(64),
-  state: z.string().length(2, "O estado deve ter exatamente 2 caracteres"),
-  zipCode: z.string().refine((value) => /^\d{5}-\d{3}$/.test(value), {
-    message: "Informe um CEP válido",
-  }),
-});
-
-export type AddressFormData = z.output<typeof addressSchema>;
-</script>
-
 <script setup lang="ts">
+import type { ICepInfoEntity } from "@musat/core";
+import {
+  AddressSchema,
+  type AddressFormData,
+} from "~/utils/schema/address.schema";
 const model = defineModel<AddressFormData>({ required: true });
 const form = useTemplateRef("form");
 
 const zipCode = computed(() => {
-  return model.value?.zipCode.replace(/\D+/g, "");
+  return sanitizeNumberStr(model.value?.zipCode ?? "");
 });
+const initialZipCode = ref(zipCode.value);
 
 const {
   data: zipCodeInfo,
@@ -66,7 +50,8 @@ const zipCodeError = computed(() => {
 const loadZipCodeInfo = async () => {
   if (
     isZipCodeLoading.value ||
-    zipCode.value === zipCodeInfo.value?.cep ||
+    zipCode.value ===
+      sanitizeNumberStr(zipCodeInfo.value?.cep ?? initialZipCode.value) ||
     error.value
   ) {
     return;
@@ -92,7 +77,7 @@ const loadZipCodeInfo = async () => {
   <UForm
     ref="form"
     class="space-y-4"
-    :schema="addressSchema"
+    :schema="AddressSchema"
     :state="modelValue"
     :validate-on="['input', 'change']"
   >

@@ -1,4 +1,11 @@
-import { UID_COOKIE_NAME, type IUserEntity } from "@musat/core";
+import {
+  isAuthorized,
+  UID_COOKIE_NAME,
+  type UserRole,
+  type IUserEntity,
+} from "@musat/core";
+import type { AccountUpdateFormData } from "~/utils/schema/account.schema";
+import type { FetchOptions } from "ofetch";
 
 const user = ref<IUserEntity | null>(null);
 
@@ -43,6 +50,26 @@ export const useUserSession = <T extends boolean>(required?: T) => {
     userId.value = null;
   };
 
+  const update = async (
+    data: AccountUpdateFormData,
+    options?: FetchOptions<"json", IUserEntity>
+  ) => {
+    if (isLoggedIn.value) {
+      const userData = await $api<IUserEntity>("/users/me", {
+        ...(options as object),
+        method: "PATCH",
+        body: data,
+      });
+
+      user.value = userData;
+      return userData;
+    }
+    return user.value;
+  };
+
+  const hasRole = (role: UserRole | UserRole[]) =>
+    user.value && isAuthorized(user.value, role);
+
   if (!user.value && required) {
     toast.add({
       title: "Entre com sua conta",
@@ -64,6 +91,8 @@ export const useUserSession = <T extends boolean>(required?: T) => {
     refresh,
     login,
     logout,
+    hasRole,
+    update,
     isLoggedIn,
   };
 };

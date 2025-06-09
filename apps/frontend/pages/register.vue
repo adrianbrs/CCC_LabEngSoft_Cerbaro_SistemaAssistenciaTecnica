@@ -3,7 +3,7 @@ import { PasswordStrength } from "#components";
 import type { IUserEntity } from "@musat/core";
 import type { FormSubmitEvent, StepperItem } from "@nuxt/ui";
 import { z } from "zod";
-import type { AddressFormData } from "~/components/AddressForm.vue";
+import { AccountCreateSchema } from "~/utils/schema/account.schema";
 
 definePageMeta({
   layout: "single-card",
@@ -24,41 +24,14 @@ useHead({
 const { $api } = useNuxtApp();
 const router = useRouter();
 
-const schema = z
-  .object({
-    name: z
-      .string()
-      .min(3, "O nome deve ter pelo menos 3 caracteres")
-      .max(100, "O nome deve ter no máximo 100 caracteres")
-      .regex(/[^\s]\s+[^\s]/, {
-        message: "Por favor, informe seu nome completo",
-      }),
-    email: z.string().nonempty("Por favor, informe seu e-mail").email(),
-    cpf: z
-      .string()
-      .nonempty("Por favor, informe seu CPF")
-      .refine((value) => isValidCPF(value), {
-        message: "O CPF informado é inválido",
-      })
-      .transform((value) => value.replace(/\D/g, "")),
-    phone: z
-      .string()
-      .nonempty("Por favor, informe seu telefone")
-      .transform((value) => value.replace(/\D/g, "")),
-    password: z
-      .string()
-      .nonempty("A senha é obrigatória")
-      .refine((value) => isStrongPassword(value), {
-        message: "A senha não é forte o suficiente",
-      }),
-    passwordConfirmation: z.string().nonempty("Por favor, confirme sua senha"),
-  })
-  .refine((data) => data.password === data.passwordConfirmation, {
-    message: "As senhas não coincidem",
-    path: ["passwordConfirmation"],
-  });
+const schema = AccountCreateSchema.extend({
+  passwordConfirmation: z.string().nonempty("Por favor, confirme sua senha"),
+}).refine((data) => data.password === data.passwordConfirmation, {
+  message: "As senhas não coincidem",
+  path: ["passwordConfirmation"],
+});
 
-type FormData = z.output<typeof schema> & { address: AddressFormData };
+type FormData = z.output<typeof schema>;
 
 const state = reactive<FormData>({
   name: "",
@@ -113,7 +86,6 @@ const onSubmit = async ({ data }: FormSubmitEvent<FormData>) => {
             stepper.value.prev();
           }
 
-          // FIXME: Errors disappear right after showing
           form.value?.setErrors(
             [
               {
@@ -139,11 +111,11 @@ const onSubmit = async ({ data }: FormSubmitEvent<FormData>) => {
             stepper.value.prev();
           }
 
-          // FIXME: Errors disappear right after showing
           form.value?.setErrors(
             [
               {
                 message: "E-mail já cadastrado",
+                name: "email",
               },
             ],
             "email"
@@ -234,6 +206,7 @@ const stepper = useTemplateRef("stepper");
               v-model="state.email"
               class="w-full"
               placeholder="meu@email.com"
+              autocomplete="new-email"
             />
           </UFormField>
 
@@ -267,6 +240,7 @@ const stepper = useTemplateRef("stepper");
                   v-model="state.password"
                   class="w-full"
                   placeholder="Informe uma senha"
+                  autocomplete="new-password"
                   @focus="open"
                   @blur="close"
                 />
@@ -310,7 +284,12 @@ const stepper = useTemplateRef("stepper");
           trailing
           @click="
             async () => {
-              await form?.validate({ nested: false });
+              await form?.validate({
+                nested: false,
+                name: AccountCreateSchema.keyof().options.filter(
+                  (key) => key !== 'address'
+                ),
+              });
               stepper?.next();
             }
           "

@@ -1,3 +1,7 @@
+<script lang="ts">
+export const PAGE_HEADER_ACTIONS_ID = "layout-page-header-actions" as const;
+</script>
+
 <script setup lang="ts">
 defineProps<{
   title: string;
@@ -22,35 +26,37 @@ const prevRoute = computed(() => {
 
 <template>
   <header
-    class="flex items-center gap-4 sticky top-(--ui-header-height) bg-default/75 backdrop-blur -mx-4 px-4 h-14 md:mx-0"
+    class="sticky top-(--ui-header-height) bg-default/75 backdrop-blur h-14 z-80 px-4"
   >
-    <UButton
-      v-if="prevRoute"
-      variant="ghost"
-      size="md"
-      icon="i-lucide-arrow-left"
-      :to="prevRoute"
-    >
-      Voltar
-    </UButton>
+    <div class="flex items-center gap-4 border-b border-default h-full">
+      <UButton
+        v-if="prevRoute"
+        variant="link"
+        size="md"
+        icon="i-lucide-arrow-left"
+        :to="prevRoute"
+      >
+        Voltar
+      </UButton>
 
-    <slot>
-      <div class="flex flex-col flex-1 min-w-0">
-        <slot name="title">
-          <h1 class="text-lg md:text-xl font-semibold truncate">
-            {{ title }}
-          </h1>
-        </slot>
-        <slot name="description">
-          <p v-if="description" class="text-xs text-dimmed truncate">
-            {{ description }}
-          </p>
-        </slot>
-      </div>
+      <slot>
+        <div class="flex flex-col flex-1 min-w-0">
+          <slot name="title">
+            <h1 class="text-lg md:text-xl font-semibold truncate">
+              {{ title }}
+            </h1>
+          </slot>
+          <slot name="description">
+            <p v-if="description" class="text-xs text-dimmed truncate">
+              {{ description }}
+            </p>
+          </slot>
+        </div>
 
-      <div v-if="$slots.actions" class="flex items-center gap-2">
-        <slot name="actions" />
-      </div>
-    </slot>
+        <div :id="PAGE_HEADER_ACTIONS_ID" class="flex items-center gap-2">
+          <slot name="actions" />
+        </div>
+      </slot>
+    </div>
   </header>
 </template>
