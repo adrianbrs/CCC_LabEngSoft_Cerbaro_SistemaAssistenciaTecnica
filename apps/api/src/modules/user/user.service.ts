@@ -266,7 +266,7 @@ export class UserService {
     this.logger.log(`Deactivating user ${user.id}`);
 
     await this.ds.transaction(async (manager) => {
-      if (!(await user.comparePassword(dto.password))) {
+      if (!(await user.comparePassword(dto.currentPassword))) {
         this.logger.warn(
           `Invalid password confirmation during deactivation of user ${user.id}`,
         );

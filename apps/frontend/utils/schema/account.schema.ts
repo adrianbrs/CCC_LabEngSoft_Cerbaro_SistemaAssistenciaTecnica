@@ -75,3 +75,11 @@ export const AccountPasswordUpdateSchema = AccountCreateSchema.pick({
 export type AccountPasswordUpdateFormData = z.output<
   typeof AccountPasswordUpdateSchema
 >;
+
+export const AccountDeactivateSchema = z.object({
+  currentPassword: z.string().nonempty("Por favor, informe sua senha"),
+});
+
+export type AccountDeactivateFormData = z.output<
+  typeof AccountDeactivateSchema
+>;

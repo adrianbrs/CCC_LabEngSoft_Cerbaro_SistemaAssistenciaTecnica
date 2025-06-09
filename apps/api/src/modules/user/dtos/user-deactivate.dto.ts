@@ -1,6 +1,6 @@
-import { PickType } from '@nestjs/swagger';
-import { UserRegisterDto } from './user-register.dto';
+import { IsNotEmpty } from 'class-validator';
 
-export class UserDeactivateDto extends PickType(UserRegisterDto, [
-  'password',
-]) {}
+export class UserDeactivateDto {
+  @IsNotEmpty()
+  currentPassword: string;
+}

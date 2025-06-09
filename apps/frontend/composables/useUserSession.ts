@@ -4,7 +4,10 @@ import {
   type UserRole,
   type IUserEntity,
 } from "@musat/core";
-import type { AccountUpdateFormData } from "~/utils/schema/account.schema";
+import type {
+  AccountDeactivateFormData,
+  AccountUpdateFormData,
+} from "~/utils/schema/account.schema";
 import type { FetchOptions } from "ofetch";
 
 const user = ref<IUserEntity | null>(null);
@@ -67,6 +70,19 @@ export const useUserSession = <T extends boolean>(required?: T) => {
     return user.value;
   };
 
+  const deactivate = async (
+    data: AccountDeactivateFormData,
+    options?: FetchOptions<"json", unknown>
+  ) => {
+    await $api("/users/me/deactivate", {
+      ...(options as object),
+      method: "POST",
+      body: data,
+    });
+
+    await logout(true);
+  };
+
   const hasRole = (role: UserRole | UserRole[]) =>
     user.value && isAuthorized(user.value, role);
 
@@ -93,6 +109,7 @@ export const useUserSession = <T extends boolean>(required?: T) => {
     logout,
     hasRole,
     update,
+    deactivate,
     isLoggedIn,
   };
 };
