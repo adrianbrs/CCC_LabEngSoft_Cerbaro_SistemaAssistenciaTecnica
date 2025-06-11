@@ -14,6 +14,7 @@ export const Config = {
   },
   frontend: {
     accountVerificationPath: '/account/verify',
+    passwordResetPath: '/account/reset-pwd',
   },
   api: {
     brasil: {

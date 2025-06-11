@@ -9,13 +9,15 @@ import { TicketDto } from './dtos/ticket.dto';
 import { isAuthorized, UserRole } from '@musat/core';
 import { ReviewService } from '../review/review.service';
 import { UserService } from '../user/user.service';
+import { Messages } from '@/constants/messages';
 
 @Injectable()
 export class TicketService {
   private readonly logger = new Logger(TicketService.name);
 
   constructor(
-    // private readonly userService: UserService,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
     @Inject(forwardRef(() => ReviewService))
     private readonly reviewService: ReviewService
   ) { }
@@ -103,7 +105,12 @@ export class TicketService {
       `Ticket ${ticket.id} created and assigned to technician ${technician.name}`,
     );
 
-    // await this.userService.sendTicketAssignedEmail(technician);
+    this.userService.sendTemplateEmail(technician, 'ticket_assigned', {
+      subject: Messages.user.email.newTicketAssignSubject,
+      data: {
+        name: technician.name,
+      },
+    });
 
     return ticket;
   }
@@ -137,7 +144,12 @@ export class TicketService {
     }
 
     Ticket.merge(ticket, { ...updates });
-    //await this.userService.sendTicketUpdateEmail(ticket.client);
+    this.userService.sendTemplateEmail(user, 'ticket_updated', {
+      subject: Messages.user.email.ticketUpdatedSubject,
+      data: {
+        name: user.name,
+      },
+    });
 
     return ticket.save();
   }

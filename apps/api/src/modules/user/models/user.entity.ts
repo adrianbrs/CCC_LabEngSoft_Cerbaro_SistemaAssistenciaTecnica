@@ -43,6 +43,13 @@ export class User extends CoreEntity implements IUserEntity {
   @JoinColumn()
   address: Address;
 
+  @Column({ type: 'varchar', nullable: true })
+  resetPasswordToken: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetPasswordExpires: Date | null;
+
+
   async comparePassword(password: string | Buffer): Promise<boolean> {
     let hash = this.password;
     if (!hash) {

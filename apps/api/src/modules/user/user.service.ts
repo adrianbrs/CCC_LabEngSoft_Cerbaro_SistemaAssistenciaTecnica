@@ -21,6 +21,9 @@ import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 import { Messages } from '@/constants/messages';
 import { AccountVerificationError } from './errors/account-verification.error';
 import { UserRoleUpdateDto } from './dtos/userRole-update.dto';
+import { ResetPasswordDto } from './dtos/reset-password-dto';
+import { ExpiredResetToken } from './errors/expired-reset-token.error';
+import { ForgotPasswordDto } from './dtos/forgot-password-dto';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 
@@ -31,7 +34,7 @@ export class UserService {
   constructor(
     private readonly mailgun: MailgunService,
     private readonly ds: DataSource,
-  ) {}
+  ) { }
 
   async sendEmail(user: User, data: MailgunMessageData) {
     return this.mailgun.send({
@@ -72,33 +75,6 @@ export class UserService {
       data: {
         name: user.name,
         verification_url: url.toString(),
-      },
-    });
-  }
-
-  async sendTicketAssignedEmail(user: User) {
-    return this.sendTemplateEmail(user, 'ticket_assigned', {
-      subject: Messages.user.email.newTicketAssignSubject,
-      data: {
-        name: user.name,
-      },
-    });
-  }
-
-  async sendTicketUpdateEmail(user: User) {
-    return this.sendTemplateEmail(user, 'ticket_updated', {
-      subject: Messages.user.email.ticketUpdatedSubject,
-      data: {
-        name: user.name,
-      },
-    });
-  }
-
-  async sendRoleChangedEmail(user: User) {
-    return this.sendTemplateEmail(user, 'role_changed', {
-      subject: Messages.user.email.roleChangeSubject,
-      data: {
-        name: user.name,
       },
     });
   }
@@ -257,7 +233,12 @@ export class UserService {
 
     this.logger.log(`Role for user ${userId} updated to ${user.role}`);
 
-    await this.sendRoleChangedEmail(user);
+    this.sendTemplateEmail(user, 'role_changed', {
+      subject: Messages.user.email.roleChangeSubject,
+      data: {
+        name: user.name,
+      },
+    });
 
     return user;
   }
@@ -314,5 +295,61 @@ export class UserService {
         role: UserRole.ADMIN,
       },
     });
+  }
+
+
+  async forgotPwd(dto: ForgotPasswordDto) {
+    const user = await User.findOneOrFail({
+      where: {
+        email: dto.email,
+      },
+    });
+
+    const token = generateHexToken(32);
+    this.logger.log("OLHA AQUI TCHE: " + token);
+
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = new Date(Date.now() + 1000 * 60 * 60); // 1 hora;
+    await user.save();
+
+    const url = new URL(Config.frontend.passwordResetPath, FRONTEND_URL);
+    url.searchParams.set('user', user.email);
+    url.searchParams.set('token', user.resetPasswordToken);
+
+    await this.sendTemplateEmail(user, 'forgot_password', {
+      subject: Messages.user.email.passwordResetSubject,
+      data: {
+        name: user.name,
+        reset_url: url.toString(),
+      }
+    });
+    this.logger.log(`Sent reset password email to ${dto.email}`);
+  }
+
+  async resetPwd(dto: ResetPasswordDto): Promise<void> {
+    const user = await User.findOneOrFail({
+      where: {
+        email: dto.email
+      },
+    });
+
+    if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+      this.logger.warn(`Invalid or expired reset password token for ${user.email}`);
+      throw new ExpiredResetToken();
+    }
+
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    user.password = await User.hashPassword(dto.newPassword);
+
+    this.sendTemplateEmail(user, 'password changed',{
+      subject: Messages.user.email.passwordChangedSubject,
+      data:{
+        name: user.name,
+      }
+    })
+
+    await user.save();
+
   }
 }

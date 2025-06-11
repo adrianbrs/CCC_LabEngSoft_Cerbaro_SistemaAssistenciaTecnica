@@ -18,6 +18,8 @@ import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 import { UserRole } from '@musat/core';
 import { UserRoleUpdateDto } from './dtos/userRole-update.dto';
 import { TicketService } from '../ticket/ticket.service';
+import { ResetPasswordDto } from './dtos/reset-password-dto';
+import { ForgotPasswordDto } from './dtos/forgot-password-dto';
 
 @Controller('users')
 export class UserController {
@@ -32,19 +34,19 @@ export class UserController {
 
   @Get('/admins')
   @Authorize(UserRole.ADMIN)
-  async getAdmins(){
+  async getAdmins() {
     return this.userService.getAdmins();
   }
 
   @Get('/technicians')
   @Authorize(UserRole.ADMIN)
-  async getTechnicians(){
+  async getTechnicians() {
     return this.userService.getTechnicians();
   }
 
   @Get('/clients')
   @Authorize(UserRole.ADMIN)
-  async getClients(){
+  async getClients() {
     return this.userService.getClients();
   }
 
@@ -113,5 +115,16 @@ export class UserController {
   @Get(':id')
   async getOne(@Param('id') id: string) {
     return this.userService.getOne(id);
+  }
+
+  @Post('forgot-password')
+  @Public()
+  async forgotPwd(@Body() dto: ForgotPasswordDto) {
+    return this.userService.forgotPwd(dto);
+  }
+
+  @Post('reset-password')
+  async resetPwd(@Body() dto: ResetPasswordDto) {
+    return this.userService.resetPwd(dto);
   }
 }
