@@ -14,6 +14,6 @@ import { UserModule } from '../user/user.module';
   ],
   controllers: [ReviewController],
   providers: [ReviewService],
-  exports: [ReviewService], // 👈 exporta para que outros módulos possam usar
+  exports: [ReviewService], 
 })
 export class ReviewModule {}

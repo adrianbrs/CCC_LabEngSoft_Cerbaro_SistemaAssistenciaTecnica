@@ -14,6 +14,6 @@ import { UserModule } from '../user/user.module';
   ],
   controllers: [TicketController],
   providers: [TicketService],
-  exports: [TicketService], // 👈 exporta para que outros módulos possam usar
+  exports: [TicketService],
 })
 export class TicketModule {}
