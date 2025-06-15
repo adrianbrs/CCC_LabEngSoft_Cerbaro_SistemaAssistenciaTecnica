@@ -35,9 +35,8 @@ const prevRoute = computed(() => {
         size="md"
         icon="i-lucide-arrow-left"
         :to="prevRoute"
-      >
-        Voltar
-      </UButton>
+        aria-label="Voltar"
+      />
 
       <slot>
         <div class="flex flex-col flex-1 min-w-0">

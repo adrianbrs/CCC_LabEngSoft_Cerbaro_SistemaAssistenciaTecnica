@@ -1,12 +1,5 @@
 <script setup lang="ts">
 const { user } = useUserSession(true);
-
-definePageMeta({
-  nav: {
-    label: "Início",
-    icon: "i-lucide-home",
-  },
-});
 </script>
 
 <template>

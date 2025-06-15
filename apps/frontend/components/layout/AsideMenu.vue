@@ -1,21 +1,14 @@
 <script lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
-import type { RouteRecordRaw } from "vue-router";
-
-declare module "#app" {
-  interface PageMeta {
-    nav?: Partial<NavigationMenuItem>;
-  }
-}
 </script>
 
 <script setup lang="ts">
-const router = useRouter();
 const route = useRoute();
+const router = useRouter();
 const open = defineModel<boolean>("open");
+const { hasRole } = useUserSession();
 const isDesktop = useMediaQuery("(width >= 48rem)");
 const [DefineNavTemplate, UseNavTemplate] = createReusableTemplate();
-const { hasRole } = useUserSession(true);
 
 watch(
   () => route.path,
@@ -26,53 +19,65 @@ watch(
   }
 );
 
-const items = computed<NavigationMenuItem[][]>(() => {
-  const getItems = (
-    routes: readonly RouteRecordRaw[]
-  ): NavigationMenuItem[] => {
-    return routes.flatMap((route) => {
-      const { meta } = route;
+const items = computed<NavigationMenuItem[][]>(() => [
+  [
+    {
+      to: "/",
+      label: "Início",
+      icon: "i-lucide-home",
+    },
+  ],
+  [
+    {
+      label: "Administração",
+      type: "label",
+    },
+    {
+      label: "Categorias",
+      icon: "i-lucide-group",
+      to: "/categories",
+    },
+  ],
+]);
 
-      if (!meta?.nav) {
-        if (route.children?.length) {
-          // Recursively get items from child routes as top-level items
-          // if the parent route doesn't have a nav item
-          return getItems(route.children);
-        }
-        // Remove routes that are not marked for navigation
-        return [];
+const filterItems = <T extends NavigationMenuItem>(items: T[]): T[] => {
+  const result = items
+    .map((item) => ({
+      ...item,
+      children: item.children ? filterItems(item.children) : [],
+    }))
+    .filter((item) => {
+      const route =
+        item.to || item.href ? router.resolve(item.to ?? item.href!) : null;
+      const auth = route?.meta?.auth;
+
+      // Remove items the user does not have access to
+      if (typeof auth === "object" && auth.role && !hasRole(auth.role)) {
+        return false;
       }
 
-      // Remove routes that user doesn't have access to
-      if (
-        typeof meta?.auth === "object" &&
-        meta?.auth.role &&
-        !hasRole(meta.auth.role)
-      ) {
-        return [];
-      }
-
-      return {
-        to: {
-          name: route.name,
-          path: route.path,
-        },
-        ...(meta?.nav as NavigationMenuItem),
-        ...(route.children && {
-          children: getItems(route.children),
-        }),
-      };
+      return true;
     });
-  };
 
-  return [getItems(router.options.routes)];
-});
+  if (!result.some((item) => item.to || item.href || item.children?.length)) {
+    // Return an empty array if the resulting array has no valid items
+    return [];
+  }
+
+  return result;
+};
+
+const normalizedItems = computed(() =>
+  items.value
+    .map((group) => filterItems(group))
+    .filter((group) => group.length > 0)
+);
 </script>
 
 <template>
   <div class="grid grid-cols-10">
     <DefineNavTemplate>
-      <UNavigationMenu orientation="vertical" :items="items" />
+      <UNavigationMenu orientation="vertical" :items="normalizedItems" />
     </DefineNavTemplate>
 
     <aside

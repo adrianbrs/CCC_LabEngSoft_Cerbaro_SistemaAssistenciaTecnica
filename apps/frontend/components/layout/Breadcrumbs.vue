@@ -1,16 +1,23 @@
-<script setup lang="ts">
+<script lang="ts">
 import type { BreadcrumbItem } from "@nuxt/ui";
 
+declare module "#app" {
+  interface PageMeta {
+    breadcrumb?: Partial<BreadcrumbItem>;
+  }
+}
+</script>
+
+<script setup lang="ts">
 const router = useRouter();
 const route = useRoute();
 
 const children = computed<BreadcrumbItem[]>(() =>
   route.matched
-    .filter((item) => item.path !== "/" && item.meta.nav)
+    .filter((item) => item.path !== "/" && item.meta.breadcrumb)
     .map((item) => ({
-      label: item.meta.nav?.label,
-      icon: item.meta.nav?.icon,
-      to: item.meta.nav?.to ?? item.path,
+      to: item.path,
+      ...(item.meta.breadcrumb as BreadcrumbItem),
     }))
 );
 
@@ -23,9 +30,8 @@ const items = computed<BreadcrumbItem[]>(() => {
 
   return [
     {
-      label: home.meta.nav?.label,
-      icon: home.meta.nav?.icon,
-      to: home.meta.nav?.to ?? home.path,
+      to: home.path,
+      ...(home.meta.breadcrumb as BreadcrumbItem),
     },
     ...children.value,
   ];
