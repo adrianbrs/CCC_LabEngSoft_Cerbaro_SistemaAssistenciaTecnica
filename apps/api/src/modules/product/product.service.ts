@@ -1,101 +1,115 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ProductDto } from "./dtos/product.dto";
-import { Product } from "./models/product.entity";
-import { ProductUpdateDto } from "./dtos/product-update.dto";
-import { Brand } from "./models/brand.entity";
-import { Category } from "./models/category.entity";
-import { DataSource, ILike } from "typeorm";
-import { ProductFiltersDto } from "./dtos/product-filters.dto";
+import { Injectable, Logger } from '@nestjs/common';
+import { ProductDto } from './dtos/product.dto';
+import { Product } from './models/product.entity';
+import { ProductUpdateDto } from './dtos/product-update.dto';
+import { DataSource, ILike, Not } from 'typeorm';
+import { ProductFiltersDto } from './dtos/product-filters.dto';
+import { Paginated } from '@/shared/pagination';
+import { DuplicateProductError } from './errors/duplicate-product.error';
 
 @Injectable()
 export class ProductService {
-    private readonly logger = new Logger(ProductService.name);
+  private readonly logger = new Logger(ProductService.name);
 
-    constructor(private readonly ds: DataSource) {
-        this.logger.log('ProductService initialized');
-        
+  constructor(private readonly ds: DataSource) {
+    this.logger.log('ProductService initialized');
+  }
+
+  async getAll(filters?: ProductFiltersDto): Promise<Paginated<Product>> {
+    this.logger.log(`Fetching all products`, filters);
+
+    const result = await Product.findAndCount({
+      where: {
+        ...(filters?.model && {
+          model: ILike(`%${filters?.model}%`),
+        }),
+        ...(filters?.brandId && {
+          brand: { id: filters?.brandId },
+        }),
+        ...(filters?.categoryId && {
+          category: { id: filters?.categoryId },
+        }),
+      },
+      ...filters?.getFindOptions(),
+    });
+
+    this.logger.log(`Found ${result[1]} products`, filters);
+
+    return Paginated.from(result, filters);
+  }
+
+  async create(productDto: ProductDto): Promise<Product> {
+    this.logger.log('Creating product', productDto);
+
+    const { brandId, categoryId, model } = productDto;
+
+    // Check for existing product with the same model, brand, and category
+    const existingProduct = await Product.findOne({
+      where: {
+        model: ILike(model),
+        brand: { id: brandId },
+        category: { id: categoryId },
+      },
+    });
+
+    if (existingProduct) {
+      throw new DuplicateProductError(existingProduct);
     }
 
-    async getAll(filters?: ProductFiltersDto): Promise<ProductDto[]>{
-        this.logger.log(`Fetching all products`, filters);
+    const product = Product.create({
+      model,
+      brand: { id: brandId },
+      category: { id: categoryId },
+    });
 
-        const products = await Product.find({
-                where: {
-                    ...(filters?.model && {
-                        model: ILike(`%${filters.model}%`)
-                    }),
-                },
-            });
+    await product.save();
 
-        return products;
+    this.logger.log(`Product ${product.id} created`);
+
+    return product;
+  }
+
+  async update(
+    productId: Product['id'],
+    updates: ProductUpdateDto,
+  ): Promise<Product> {
+    this.logger.log(`Updating product ${productId}`);
+
+    const product = await Product.findOneOrFail({
+      where: {
+        id: productId,
+      },
+    });
+
+    // Check for existing product with the same model, brand, and category
+    const existingProduct = await Product.findOne({
+      where: {
+        model: ILike(updates.model ?? product.model),
+        brand: { id: updates.brandId ?? product.brand.id },
+        category: { id: updates.categoryId ?? product.category.id },
+        id: Not(productId), // Exclude the current product
+      },
+    });
+
+    if (existingProduct) {
+      throw new DuplicateProductError(existingProduct);
     }
 
-    async create(productDto: ProductDto): Promise<Product> {
-        this.logger.log('Creating product');
+    Product.merge(product, { ...updates });
 
-        return this.ds.transaction(async (manager) => {
-            const {
-                brand: brandData,
-                category: categoryData,
-                ...productData
-            } = productDto;
+    return product.save();
+  }
 
-            let brand = await manager.findOne(Brand, {
-                where: { name: brandData.name },
-            });
+  async delete(productId: Product['id']): Promise<void> {
+    this.logger.log(`Deleting product with ID: ${productId}`);
 
-            if (!brand) {
-                brand = manager.create(Brand, brandData);
-                await manager.save(brand);
-            }
+    // Delete should not throw an error if the product does not exist
+    const product = await Product.findOne({
+      where: {
+        id: productId,
+      },
+    });
 
-            let category = await manager.findOne(Category, {
-                where: { name: categoryData.name },
-            });
-
-            if (!category) {
-                category = manager.create(Category, categoryData);
-                await manager.save(category);
-            }
-
-            const product = manager.create(Product, {
-                ...productData,
-                brand,
-                category,
-            });
-
-            await manager.save(product);
-
-            this.logger.log(`Product ${product.id} created`);
-            return product;
-        });
-    }
-
-
-    async update(productId: Product['id'], updates: ProductUpdateDto): Promise<ProductDto> {
-        this.logger.log(`Updating product ${productId}`);
-
-        const product = await Product.findOneOrFail({
-            where: {
-                id: productId
-            }
-        });
-
-        Product.merge(product, { ...updates });
-
-        return product.save();
-    }
-
-    async delete(productId: Product['id']): Promise<void> {
-        this.logger.log(`Deleting product with ID: ${productId}`);
-    
-        const product = await Product.findOneOrFail({
-          where: {
-            id: productId
-          }
-        });
-        await product.remove();
-        this.logger.log(`Product with ID: ${productId} deleted`);
-    
-      }
+    await product?.remove();
+  }
 }

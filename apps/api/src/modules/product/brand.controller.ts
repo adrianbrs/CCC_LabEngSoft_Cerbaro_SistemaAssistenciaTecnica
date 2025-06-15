@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { BrandService } from './brand.service';
 import { BrandDto } from './dtos/brand.dto';
 import { BrandUpdateDto } from './dtos/brand-update.dto';
@@ -11,8 +21,14 @@ export class BrandController {
   constructor(private readonly brandService: BrandService) {}
 
   @Get()
-  async getAll(@Param() filters: BrandFiltersDto) {
+  async getAll(@Query() filters: BrandFiltersDto) {
     return this.brandService.getAll(filters);
+  }
+
+  @Get('/:id')
+  @Authorize(UserRole.TECHNICIAN)
+  async getOne(@Param('id') id: string) {
+    return this.brandService.getById(id);
   }
 
   @Post()
@@ -28,7 +44,9 @@ export class BrandController {
   }
 
   @Delete('/id')
-  async delete(@Param('id') id: string){
+  @Authorize(UserRole.ADMIN)
+  @HttpCode(204)
+  async delete(@Param('id') id: string) {
     return this.brandService.delete(id);
   }
 }

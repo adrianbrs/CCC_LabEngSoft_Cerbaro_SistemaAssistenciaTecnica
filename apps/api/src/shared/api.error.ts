@@ -1,7 +1,12 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
 export class ApiError extends HttpException {
-  constructor(code: string, message: string, statusCode: HttpStatus) {
+  constructor(
+    code: string,
+    message: string,
+    statusCode: HttpStatus,
+    metadata?: unknown,
+  ) {
     super(
       {
         code,
@@ -10,5 +15,9 @@ export class ApiError extends HttpException {
       },
       statusCode,
     );
+
+    if (metadata) {
+      Object.assign(this, { metadata });
+    }
   }
 }

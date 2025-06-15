@@ -1,19 +1,16 @@
-import { IsNotEmpty, Length, ValidateNested } from "class-validator";
-import { BrandDto } from "./brand.dto";
-import { Type } from "class-transformer";
-import { CategoryDto } from "./category.dto";
+import { IsUUID, Length } from 'class-validator';
+import { Brand } from '../models/brand.entity';
+import { Category } from '../models/category.entity';
+import { Trim } from '@/shared/transformers';
 
-export class ProductDto{
-	@Length(2,100)
-	model: string;
+export class ProductDto {
+  @Length(2, 100)
+  @Trim()
+  model: string;
 
-	@IsNotEmpty()
-	@ValidateNested()
-	@Type(()=>BrandDto)
-	brand: BrandDto;
+  @IsUUID('4')
+  brandId: Brand['id'];
 
-	@IsNotEmpty()
-	@ValidateNested()
-	@Type(()=>CategoryDto)
-	category: CategoryDto;
+  @IsUUID('4')
+  categoryId: Category['id'];
 }

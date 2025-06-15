@@ -1,24 +1,26 @@
-import { forwardRef, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Ticket } from './models/ticket.entity';
 import { TicketCreateDto } from './dtos/ticket-create.dto';
 import { User } from '../user/models/user.entity';
 import { Product } from '../product/models/product.entity';
 import { TicketUpdateDto } from './dtos/ticket-update.dto';
-import { TicketDto } from './dtos/ticket.dto';
 import { isAuthorized, UserRole } from '@musat/core';
 import { ReviewService } from '../review/review.service';
-import { UserService } from '../user/user.service';
 
 @Injectable()
 export class TicketService {
   private readonly logger = new Logger(TicketService.name);
 
   constructor(
-    // private readonly userService: UserService,
     @Inject(forwardRef(() => ReviewService))
-    private readonly reviewService: ReviewService
-  ) { }
+    private readonly reviewService: ReviewService,
+  ) {}
 
   async getAll() {
     return Ticket.find();
@@ -27,16 +29,16 @@ export class TicketService {
   async getOne(ticketId: Ticket['id']) {
     return Ticket.findOneOrFail({
       where: {
-        id: ticketId
-      }
+        id: ticketId,
+      },
     });
   }
 
   /**
- * Function to create a ticket and assign a technician to it automatically
- * based on a round-robin algorithm
- * Notifies the technician via email about the new ticket.
- */
+   * Function to create a ticket and assign a technician to it automatically
+   * based on a round-robin algorithm
+   * Notifies the technician via email about the new ticket.
+   */
   async create(client: User, ticketDto: TicketCreateDto): Promise<Ticket> {
     this.logger.log('Creating ticket');
 
@@ -46,16 +48,14 @@ export class TicketService {
       where: { id: productId },
     });
 
-    this.logger.log(product)
-
+    this.logger.log(product);
 
     const technicians = await User.find({
       where: {
         role: UserRole.TECHNICIAN,
-      }
+      },
     });
     this.logger.log(technicians);
-
 
     if (technicians.length === 0) {
       throw new Error('No technician available');
@@ -67,9 +67,7 @@ export class TicketService {
       take: 1,
     });
 
-
-
-    this.logger.log(lastTicket)
+    this.logger.log(lastTicket);
 
     let technician: User;
 
@@ -108,8 +106,6 @@ export class TicketService {
     return ticket;
   }
 
-
-
   /**
    * Function to update a ticket's status attribute.
    * Accessible only to technicians and admins.
@@ -120,7 +116,7 @@ export class TicketService {
     user: User,
     ticketId: Ticket['id'],
     updates: TicketUpdateDto,
-  ): Promise<TicketDto> {
+  ): Promise<Ticket> {
     this.logger.log(`Updating ticket ${ticketId} by ${user.id}`, updates);
 
     const ticket = await Ticket.findOneOrFail({
@@ -153,21 +149,20 @@ export class TicketService {
 
     const ticket = await Ticket.findOneOrFail({
       where: {
-        id: ticketId
-      }
+        id: ticketId,
+      },
     });
     await ticket.remove();
     this.logger.log(`Ticket with ID: ${ticketId} deleted`);
-
   }
 
   async getMyTickets(user: User): Promise<Ticket[]> {
     const tickets = await Ticket.find({
       where: {
         client: {
-          id: user.id
-        }
-      }
+          id: user.id,
+        },
+      },
     });
 
     return tickets;
@@ -177,8 +172,8 @@ export class TicketService {
     const tickets = await Ticket.find({
       where: {
         technician: {
-          id: user.id
-        }
+          id: user.id,
+        },
       },
     });
 

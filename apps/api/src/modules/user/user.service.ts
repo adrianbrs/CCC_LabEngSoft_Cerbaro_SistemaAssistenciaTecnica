@@ -6,7 +6,7 @@ import { MissingVerificationTokenError } from './errors/missing-verification-tok
 import { UserRegisterDto } from './dtos/user-register.dto';
 import { Address } from '../address/models/address.entity';
 import { UserRole } from '@musat/core';
-import { DataSource } from 'typeorm';
+import { DataSource, ILike } from 'typeorm';
 import {
   generateHexToken,
   replaceMustacheVariables,
@@ -20,7 +20,9 @@ import { UserUpdateDto } from './dtos/user-update.dto';
 import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 import { Messages } from '@/constants/messages';
 import { AccountVerificationError } from './errors/account-verification.error';
-import { UserRoleUpdateDto } from './dtos/userRole-update.dto';
+import { UserInternalUpdateDto } from './dtos/user-internal-update.dto';
+import { UserFiltersDto } from './dtos/user-filters.dto';
+import { Paginated } from '@/shared/pagination';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 
@@ -239,11 +241,11 @@ export class UserService {
     });
   }
 
-  async updateRole(
+  async internalUpdate(
     userId: User['id'],
-    userRoleUpdateDto: UserRoleUpdateDto,
+    updates: UserInternalUpdateDto,
   ): Promise<User> {
-    this.logger.log(`Updating role for user ${userId}`);
+    this.logger.log(`Internally updating user ${userId}`);
 
     const user = await User.findOneOrFail({
       where: {
@@ -251,13 +253,16 @@ export class UserService {
       },
     });
 
-    user.role = userRoleUpdateDto.role;
+    await this.ds.transaction(async (manager) => {
+      User.merge(user, {
+        ...updates,
+      });
 
-    await user.save();
+      await manager.save(user);
+      await this.sendRoleChangedEmail(user);
+    });
 
     this.logger.log(`Role for user ${userId} updated to ${user.role}`);
-
-    await this.sendRoleChangedEmail(user);
 
     return user;
   }
@@ -293,26 +298,24 @@ export class UserService {
     });
   }
 
-  async getTechnicians(): Promise<User[]> {
-    return User.find({
-      where: {
-        role: UserRole.TECHNICIAN,
-      },
-    });
-  }
+  async getAll(filters?: UserFiltersDto): Promise<Paginated<User>> {
+    this.logger.log('Fetching users with filters', filters);
 
-  async getClients(): Promise<User[]> {
-    return User.find({
+    const result = await User.findAndCount({
       where: {
-        role: UserRole.CLIENT,
+        ...(filters?.name && {
+          name: ILike(`%${filters.name}%`),
+        }),
+        ...(filters?.role && {
+          role: filters.role,
+        }),
       },
-    });
-  }
-  async getAdmins(): Promise<User[]> {
-    return User.find({
-      where: {
-        role: UserRole.ADMIN,
+      order: {
+        createdAt: 'DESC',
       },
+      ...filters?.getFindOptions(),
     });
+
+    return Paginated.from(result, filters);
   }
 }

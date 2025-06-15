@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { User } from './models/user.entity';
 import { UserVerifyDto } from './dtos/user-verify.dto';
@@ -16,36 +17,17 @@ import { Authorize, LoggedUser, Public } from '../auth/auth.decorator';
 import { UserUpdateDto } from './dtos/user-update.dto';
 import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 import { UserRole } from '@musat/core';
-import { UserRoleUpdateDto } from './dtos/userRole-update.dto';
-import { TicketService } from '../ticket/ticket.service';
+import { UserInternalUpdateDto } from './dtos/user-internal-update.dto';
+import { UserFiltersDto } from './dtos/user-filters.dto';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService
-  ) { }
+  constructor(private readonly userService: UserService) {}
 
   @Get()
   @Authorize(UserRole.ADMIN)
-  async getAll() {
-    return User.find();
-  }
-
-  @Get('/admins')
-  @Authorize(UserRole.ADMIN)
-  async getAdmins(){
-    return this.userService.getAdmins();
-  }
-
-  @Get('/technicians')
-  @Authorize(UserRole.ADMIN)
-  async getTechnicians(){
-    return this.userService.getTechnicians();
-  }
-
-  @Get('/clients')
-  @Authorize(UserRole.ADMIN)
-  async getClients(){
-    return this.userService.getClients();
+  async getAll(@Query() filters: UserFiltersDto) {
+    return this.userService.getAll(filters);
   }
 
   /**
@@ -99,15 +81,15 @@ export class UserController {
   }
 
   /**
-   * Allows admins to change a user's role   * 
+   * Allows admins to change a user's data
    */
   @Patch(':id')
   @Authorize(UserRole.ADMIN)
-  updateRole(
+  updateOne(
     @Param('id') userId: string,
-    @Body() userRoleUpdateDto: UserRoleUpdateDto
+    @Body() updateDto: UserInternalUpdateDto,
   ) {
-    return this.userService.updateRole(userId, userRoleUpdateDto);
+    return this.userService.internalUpdate(userId, updateDto);
   }
 
   @Get(':id')

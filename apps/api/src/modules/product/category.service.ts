@@ -1,78 +1,108 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { CategoryDto } from "./dtos/category.dto";
-import { Category } from "./models/category.entity";
-import { CategoryUpdateDto } from "./dtos/category-update.dto";
-import { CategoryFiltersDto } from "./dtos/category-filters.dto";
-import { ILike } from "typeorm";
+import { Injectable, Logger } from '@nestjs/common';
+import { CategoryDto } from './dtos/category.dto';
+import { Category } from './models/category.entity';
+import { CategoryUpdateDto } from './dtos/category-update.dto';
+import { CategoryQueryDto } from './dtos/category-query.dto';
+import { ILike, Not } from 'typeorm';
+import { Paginated } from '@/shared/pagination';
+import { DuplicateCategoryError } from './errors/duplicate-category.error';
 
 @Injectable()
-export class CategoryService{
-    private readonly logger = new Logger(CategoryService.name);
+export class CategoryService {
+  private readonly logger = new Logger(CategoryService.name);
 
-    constructor(){
-        this.logger.log('CategoryService initialized');
+  async getAll(query?: CategoryQueryDto): Promise<Paginated<Category>> {
+    this.logger.log(`Fetching all categories`, query);
+
+    const result = await Category.findAndCount({
+      where: {
+        ...(query?.name && {
+          name: ILike(`%${query?.name}%`),
+        }),
+      },
+      ...query?.getFindOptions(),
+    });
+
+    this.logger.log(`Found ${result[1]} categories`, query);
+
+    return Paginated.from(result, query);
+  }
+
+  async getById(categoryId: Category['id']): Promise<Category> {
+    this.logger.log(`Fetching category with ID: ${categoryId}`);
+    const category = await Category.findOneOrFail({
+      where: {
+        id: categoryId,
+      },
+    });
+    this.logger.log('Category found', category);
+    return category;
+  }
+
+  async create(categoryDto: CategoryDto): Promise<Category> {
+    this.logger.log('Creating new category', categoryDto);
+
+    // Check for category with the same name
+    const existingCategory = await Category.findOne({
+      where: {
+        name: ILike(categoryDto.name),
+      },
+    });
+
+    if (existingCategory) {
+      throw new DuplicateCategoryError(existingCategory);
     }
 
-    async getAll(filters?: CategoryFiltersDto): Promise<CategoryDto[]>{
-        this.logger.log(`Fetching all categories`, filters);
-        const categories = await Category.find({
-            where: {
-                ...(filters?.name && {
-                    name: ILike(`%${filters.name}%`)
-                }),
-            },
-        });
-        return categories;
+    const category = Category.create({
+      ...categoryDto,
+    });
+
+    await Category.save(category);
+
+    return category;
+  }
+
+  async update(
+    categoryId: Category['id'],
+    updates: CategoryUpdateDto,
+  ): Promise<Category> {
+    this.logger.log(`Updating category ${categoryId}`, updates);
+
+    // Check for category with the same name
+    if (updates.name) {
+      const existingCategory = await Category.findOne({
+        where: {
+          name: ILike(updates.name),
+          id: Not(categoryId), // Ensure we don't match the current category
+        },
+      });
+
+      if (existingCategory) {
+        throw new DuplicateCategoryError(existingCategory);
+      }
     }
 
-    async getCategoryById(categoryId: Category['id']): Promise<CategoryDto> {
-        this.logger.log(`Fetching category with ID: ${categoryId}`);
-        
-        const category = await Category.findOneOrFail({
-            where: {
-                id: categoryId
-            }
-        });
-        this.logger.log(`Category found: ${JSON.stringify(category)}`);
-        return category;
-    }
-    
+    const category = await Category.findOneOrFail({
+      where: {
+        id: categoryId,
+      },
+    });
 
-    async create(categoryDto: CategoryDto): Promise<CategoryDto>{
+    Category.merge(category, { ...updates });
 
-        const category = Category.create({
-            ...categoryDto
-        })
+    return category.save();
+  }
 
-        await Category.save(category);
+  async delete(categoryId: Category['id']): Promise<void> {
+    this.logger.log(`Deleting category with ID: ${categoryId}`);
 
-        return category;
-    }
+    // Delete should not throw an error if the category does not exist
+    const category = await Category.findOne({
+      where: {
+        id: categoryId,
+      },
+    });
 
-    async update(categoryId: Category['id'], updates: CategoryUpdateDto) : Promise<CategoryDto>{
-         this.logger.log(`Updating category ${categoryId}`);
-
-         const category = await Category.findOneOrFail({
-            where: {
-                id: categoryId
-            }
-        });
-
-        Category.merge(category, {...updates});
-
-        return category.save();
-    }
-
-    async delete(categoryId: Category['id']): Promise<void> {
-        this.logger.log(`Deleting category with ID: ${categoryId}`);
-
-        const category = await Category.findOneOrFail({
-            where: {
-                id: categoryId
-            }
-        });
-        await category.remove();
-        this.logger.log(`Category with ID: ${categoryId} deleted`); 
-    }
-
+    await category?.softRemove();
+  }
 }

@@ -1,3 +1,5 @@
+import { applyDecorators, SetMetadata } from '@nestjs/common';
+import { ReflectableDecorator } from '@nestjs/core';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 
 export const safeCompareStrings = (a: string, b: string): boolean => {
@@ -22,3 +24,27 @@ export const replaceMustacheVariables = (str: string, data: object): string => {
       : `{{${trimmedKey}}}`;
   });
 };
+
+/**
+ * Helper function to create a `ReflectableDecorator` that applies other decorators
+ * and sets metadata with the specific key.
+ */
+export function createDecoratorsWithKey<TParam, TTransformed>(
+  key: string,
+  factory: (
+    opts: TParam,
+    key: string,
+  ) =>
+    | (MethodDecorator & ClassDecorator)
+    | Array<MethodDecorator & ClassDecorator>,
+): ReflectableDecorator<TParam, TTransformed> {
+  const decoratorFn = ((opts: TParam) => {
+    const decorators = factory(opts, key);
+    return applyDecorators(
+      SetMetadata(key, opts),
+      ...(Array.isArray(decorators) ? decorators : [decorators]),
+    );
+  }) as ReflectableDecorator<TParam, TTransformed>;
+  decoratorFn.KEY = key;
+  return decoratorFn;
+}

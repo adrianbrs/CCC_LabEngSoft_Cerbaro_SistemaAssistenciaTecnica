@@ -7,3 +7,4 @@ export * from "./category.entity";
 export * from "./product.entity";
 export * from "./ticket.entity";
 export * from "./review.entity";
+export * from "./paginated.entity";
