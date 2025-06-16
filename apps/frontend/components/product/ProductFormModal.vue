@@ -1,58 +1,66 @@
 <script setup lang="ts">
-import type { ICategoryEntity } from "@musat/core";
+import type { IProductEntity } from "@musat/core";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import {
-  CategorySchema,
-  type CategoryFormData,
-} from "~/utils/schema/category.schema";
 import { FetchError } from "ofetch";
+import * as _ from "lodash-es";
+import {
+  ProductSchema,
+  type ProductFormData,
+} from "~/utils/schema/product.schema";
 
 const open = defineModel<boolean>("open");
 
 const props = defineProps<{
-  category?: ICategoryEntity;
+  product?: IProductEntity;
 }>();
 
 const emit = defineEmits<{
-  success: [category: ICategoryEntity, isNew: boolean];
+  success: [product: IProductEntity, isNew: boolean];
   error: [error?: Error | FetchError];
 }>();
 
 const form = useTemplateRef("form");
 const toast = useToast();
-const isEditing = computed(() => !!props.category);
-const state = reactive<CategoryFormData>({
-  name: props.category?.name ?? "",
+const state = reactive<ProductFormData>({
+  model: props.product?.model ?? "",
+  brandId: props.product?.brand?.id ?? "",
+  categoryId: props.product?.category?.id ?? "",
 });
 const { $api } = useNuxtApp();
 const loading = ref(false);
 const error = ref<Error | FetchError | undefined>();
 
-const onSubmit = async ({ data }: FormSubmitEvent<CategoryFormData>) => {
+const onSubmit = async ({ data }: FormSubmitEvent<ProductFormData>) => {
+  const body = _.cloneDeep(toRaw(data));
+
   try {
     loading.value = true;
     error.value = undefined;
-    let res: ICategoryEntity;
+    let res: IProductEntity;
 
-    if (props.category) {
-      res = await $api<ICategoryEntity>(uri`/categories/${props.category.id}`, {
+    if (props.product) {
+      res = await $api<IProductEntity>(uri`/products/${props.product.id}`, {
         method: "PATCH",
-        body: data,
+        body,
       });
     } else {
-      res = await $api<ICategoryEntity>("/categories", {
+      res = await $api<IProductEntity>("/products", {
         method: "POST",
-        body: data,
+        body,
       });
     }
 
-    emit("success", res, !isEditing.value);
+    emit("success", res, !props.product);
     open.value = false;
 
     toast.add({
-      description: isEditing.value
-        ? `Categoria "${res.name}" atualizada!`
-        : `Categoria "${res.name}" criada!`,
+      description: props.product
+        ? `Produto "${res.model}" (${
+            res.brand?.name ?? "Desconhecida"
+          }) atualizada!`
+        : `Produto "${res.model}" (${
+            res.brand?.name ?? "Desconhecida"
+          }) criada!`,
       color: "success",
       icon: "i-lucide-circle-check",
     });
@@ -61,16 +69,16 @@ const onSubmit = async ({ data }: FormSubmitEvent<CategoryFormData>) => {
 
     if (
       err instanceof FetchError &&
-      err.response?._data?.code === "DUPLICATE_CATEGORY"
+      err.response?._data?.code === "DUPLICATE_PRODUCT"
     ) {
       form.value?.setErrors(
         [
           {
-            name: "name",
-            message: "Já existe uma categoria com esse nome.",
+            name: "model",
+            message: "Já existe um produto desta marca com esse modelo.",
           },
         ],
-        "name"
+        "model"
       );
     } else {
       error.value = err as Error | FetchError;
@@ -84,9 +92,13 @@ const onSubmit = async ({ data }: FormSubmitEvent<CategoryFormData>) => {
 <template>
   <UModal
     v-model:open="open"
-    :title="isEditing ? 'Editar Categoria' : 'Nova Categoria'"
+    :title="product ? 'Editar Produto' : 'Novo Produto'"
     :aria-label="
-      isEditing ? `Editar categoria ${category?.name}` : 'Criar nova categoria'
+      product
+        ? `Editar produto ${product.model} da marca ${
+            product.brand?.name ?? 'Desconhecida'
+          }`
+        : 'Criar novo produto'
     "
     :dismissible="false"
     :close="false"
@@ -99,22 +111,32 @@ const onSubmit = async ({ data }: FormSubmitEvent<CategoryFormData>) => {
         id="category-form"
         ref="form"
         :state="state"
-        :schema="CategorySchema"
+        :schema="ProductSchema"
         :validate-on="['input', 'change']"
         :disabled="loading"
         :attach="false"
         transform
         @submit="onSubmit"
       >
-        <UFormField name="name" label="Nome" required>
-          <UInput
-            v-model="state.name"
-            :placeholder="
-              isEditing ? category?.name : 'Digite o nome da nova categoria'
-            "
-            class="w-full"
-          />
-        </UFormField>
+        <div class="space-y-4">
+          <UFormField name="model" label="Modelo" required>
+            <UInput
+              v-model="state.model"
+              :placeholder="
+                product ? product.model : 'Digite o nome do modelo do produto'
+              "
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField name="brandId" label="Marca" required>
+            <BrandSelectMenu v-model="state.brandId" class="w-full" />
+          </UFormField>
+
+          <UFormField name="categoryId" label="Categoria" required>
+            <CategorySelectMenu v-model="state.categoryId" class="w-full" />
+          </UFormField>
+        </div>
 
         <UAlert
           v-if="error"

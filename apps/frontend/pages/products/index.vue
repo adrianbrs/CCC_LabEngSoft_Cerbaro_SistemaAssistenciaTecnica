@@ -3,10 +3,11 @@ import { UButton, UDropdownMenu } from "#components";
 import {
   type IPaginatedEntity,
   UserRole,
-  type ICategoryEntity,
-  type ICategoryQuery,
+  type IProductEntity,
+  type IProductQuery,
 } from "@musat/core";
 import type { DropdownMenuItem, TableColumn } from "@nuxt/ui";
+import CategorySelectMenu from "~/components/category/CategorySelectMenu.vue";
 
 definePageMeta({
   auth: {
@@ -16,28 +17,38 @@ definePageMeta({
 
 const toast = useToast();
 const action = ref<{
-  category?: ICategoryEntity;
+  product?: IProductEntity;
   type: "edit" | "delete" | "create";
 } | null>(null);
-const query = useApiQuery<ICategoryQuery>({
+const query = useApiQuery<IProductQuery>({
   page: 1,
   limit: 10,
 });
 
 const { data, status, error, refresh } = useApi<
-  IPaginatedEntity<ICategoryEntity>
->("/categories", {
-  key: "categories",
+  IPaginatedEntity<IProductEntity>
+>("/products", {
+  key: "products",
   params: query.result,
 });
 
 const pagination = useApiPagination(query.model, data);
 
 const entityColumns = useEntityColumns();
-const columns: TableColumn<ICategoryEntity>[] = [
+const columns: TableColumn<IProductEntity>[] = [
   {
-    accessorKey: "name",
+    accessorKey: "model",
     header: "Nome",
+  },
+  {
+    accessorFn: (row) => row.category?.name,
+    id: "category",
+    header: "Categoria",
+  },
+  {
+    accessorFn: (row) => row.brand?.name,
+    id: "brand",
+    header: "Marca",
   },
   ...entityColumns,
   {
@@ -45,7 +56,7 @@ const columns: TableColumn<ICategoryEntity>[] = [
   },
 ];
 
-const getRowActions = (item: ICategoryEntity) => {
+const getRowActions = (item: IProductEntity) => {
   return [
     [
       {
@@ -69,7 +80,7 @@ const getRowActions = (item: ICategoryEntity) => {
         icon: "i-lucide-edit",
         onClick: () => {
           action.value = {
-            category: item,
+            product: item,
             type: "edit",
           };
         },
@@ -81,7 +92,7 @@ const getRowActions = (item: ICategoryEntity) => {
         icon: "i-lucide-trash-2",
         onClick: () => {
           action.value = {
-            category: item,
+            product: item,
             type: "delete",
           };
         },
@@ -92,14 +103,14 @@ const getRowActions = (item: ICategoryEntity) => {
 </script>
 
 <template>
-  <LayoutPage title="Categorias" description="Gestão de categorias de produtos">
+  <LayoutPage title="Produtos" description="Gestão de produtos">
     <LayoutPageHeaderActions>
       <UButton
         color="primary"
         variant="soft"
         icon="i-lucide-plus"
         class="cursor-pointer"
-        aria-label="Cadastrar categoria"
+        aria-label="Cadastrar produto"
         @click="
           () => {
             action = {
@@ -108,17 +119,22 @@ const getRowActions = (item: ICategoryEntity) => {
           }
         "
       >
-        Categoria
+        Produto
       </UButton>
     </LayoutPageHeaderActions>
 
     <div class="flex items-center justify-between mb-2 gap-4">
       <FilterGroup :dirty="query.isDirty.value" @reset="query.reset">
         <UInput
-          v-model.trim="query.modelDebounce.name"
+          v-model.trim="query.modelDebounce.model"
           type="text"
-          placeholder="Pesquisar por nome"
-          class="w-full md:w-xs"
+          placeholder="Pesquisar por modelo"
+        />
+
+        <CategorySelectMenu v-model="query.model.categoryId" />
+        <BrandSelectMenu
+          v-model="query.model.brandId"
+          :category-id="query.result.value.categoryId"
         />
       </FilterGroup>
 
@@ -172,7 +188,7 @@ const getRowActions = (item: ICategoryEntity) => {
           class="px-6 flex flex-col items-center justify-center gap-4"
         >
           <UIcon name="i-system-uicons-box-open" size="54" />
-          <p class="text-lg">Nenhuma categoria encontrada</p>
+          <p class="text-lg">Nenhum produto encontrado</p>
         </div>
       </template>
 
@@ -201,18 +217,18 @@ const getRowActions = (item: ICategoryEntity) => {
       <UPagination v-bind="pagination.props.value" />
     </div>
 
-    <CategoryDeleteModal
-      v-if="action?.type === 'delete' && action?.category"
+    <ProductDeleteModal
+      v-if="action?.type === 'delete' && action?.product"
       open
-      :category="action?.category"
+      :product="action?.product"
       @after:leave="action = null"
       @success="refresh()"
     />
 
-    <CategoryFormModal
+    <ProductFormModal
       v-if="action?.type === 'edit' || action?.type === 'create'"
       open
-      :category="action?.category"
+      :product="action?.product"
       @after:leave="action = null"
       @success="refresh()"
     />

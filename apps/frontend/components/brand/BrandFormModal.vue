@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { IBrandEntity, ICoreEntity } from "@musat/core";
+import type { IBrandEntity } from "@musat/core";
 import type { FormSubmitEvent } from "@nuxt/ui";
 import { FetchError } from "ofetch";
 import { BrandSchema, type BrandFormData } from "~/utils/schema/brand.schema";
@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 const form = useTemplateRef("form");
 const toast = useToast();
-const state = reactive<Omit<IBrandEntity, keyof ICoreEntity>>({
+const state = reactive<BrandFormData>({
   name: props.brand?.name ?? "",
   email: props.brand?.email ?? "",
   phone: props.brand?.phone ?? "",

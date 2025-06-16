@@ -2,8 +2,12 @@ import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { Category } from '../models/category.entity';
 import { Brand } from '../models/brand.entity';
 import { PaginatedQueryDto } from '@/shared/pagination';
+import { IProductQuery } from '@musat/core';
 
-export class ProductFiltersDto extends PaginatedQueryDto {
+export class ProductFiltersDto
+  extends PaginatedQueryDto
+  implements IProductQuery
+{
   @IsOptional()
   @IsUUID('4')
   categoryId?: Category['id'];

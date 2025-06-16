@@ -99,61 +99,6 @@ const getRowActions = (item: IBrandEntity) => {
     ],
   ] satisfies DropdownMenuItem[][];
 };
-
-const removeBrand = async (category: IBrandEntity) => {
-  if (data.value) {
-    const totalItems = Math.max(0, data.value.totalItems - 1);
-    const totalPages = Math.ceil(totalItems / data.value.limit);
-    const page = Math.max(1, Math.min(data.value.page, totalPages));
-
-    data.value = {
-      ...data.value,
-      items: data.value.items.filter((item) => item.id !== category.id) ?? [],
-      totalItems,
-      totalPages,
-      page,
-      hasNextPage: totalItems > data.value.limit * page,
-      hasPrevPage: page > 1,
-    };
-    query.model.page = page;
-    query.model.limit = data.value.limit;
-  }
-  await refresh();
-};
-
-const updateBrand = async (category: IBrandEntity, isNew: boolean) => {
-  if (data.value) {
-    if (isNew) {
-      const totalItems = data.value.totalItems + 1;
-      const totalPages = Math.ceil(totalItems / data.value.limit);
-      const page = Math.max(1, totalPages);
-
-      data.value = {
-        ...data.value,
-        totalItems,
-        totalPages,
-        hasNextPage: totalItems > data.value.limit * page,
-        hasPrevPage: page > 1,
-        page,
-        ...(page === totalPages &&
-          data.value.items.length < data.value.limit && {
-            items: [...(data.value.items ?? []), category],
-          }),
-      };
-    } else {
-      data.value = {
-        ...data.value,
-        items: data.value.items.map((item) =>
-          item.id === category.id ? category : item
-        ),
-      };
-    }
-
-    query.model.page = data.value.page;
-    query.model.limit = data.value.limit;
-  }
-  await refresh();
-};
 </script>
 
 <template>
@@ -272,7 +217,7 @@ const updateBrand = async (category: IBrandEntity, isNew: boolean) => {
       open
       :brand="action?.brand"
       @after:leave="action = null"
-      @success="removeBrand"
+      @success="refresh()"
     />
 
     <BrandFormModal
@@ -280,7 +225,7 @@ const updateBrand = async (category: IBrandEntity, isNew: boolean) => {
       open
       :brand="action?.brand"
       @after:leave="action = null"
-      @success="updateBrand"
+      @success="refresh()"
     />
   </LayoutPage>
 </template>

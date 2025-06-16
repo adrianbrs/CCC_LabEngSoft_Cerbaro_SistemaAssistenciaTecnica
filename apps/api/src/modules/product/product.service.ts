@@ -66,7 +66,7 @@ export class ProductService {
 
     this.logger.log(`Product ${product.id} created`);
 
-    return product;
+    return Product.findOneOrFail({ where: { id: product.id } });
   }
 
   async update(
