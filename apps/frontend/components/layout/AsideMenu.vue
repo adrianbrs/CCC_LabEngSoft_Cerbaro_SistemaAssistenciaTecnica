@@ -34,8 +34,13 @@ const items = computed<NavigationMenuItem[][]>(() => [
     },
     {
       label: "Categorias",
-      icon: "i-lucide-group",
+      icon: "i-lucide-tag",
       to: "/categories",
+    },
+    {
+      label: "Marcas",
+      icon: "i-ci-building-01",
+      to: "/brands",
     },
   ],
 ]);

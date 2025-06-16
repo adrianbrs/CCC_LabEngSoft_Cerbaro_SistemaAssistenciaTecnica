@@ -3,10 +3,11 @@ import { UButton, UDropdownMenu } from "#components";
 import {
   type IPaginatedEntity,
   UserRole,
-  type ICategoryEntity,
-  type ICategoryQuery,
+  type IBrandEntity,
+  type IBrandQuery,
 } from "@musat/core";
 import type { DropdownMenuItem, TableColumn } from "@nuxt/ui";
+import CategorySelectMenu from "~/components/category/CategorySelectMenu.vue";
 
 definePageMeta({
   auth: {
@@ -16,28 +17,37 @@ definePageMeta({
 
 const toast = useToast();
 const action = ref<{
-  category?: ICategoryEntity;
+  brand?: IBrandEntity;
   type: "edit" | "delete" | "create";
 } | null>(null);
-const query = useApiQuery<ICategoryQuery>({
+const query = useApiQuery<IBrandQuery>({
   page: 1,
   limit: 10,
 });
 
-const { data, status, error, refresh } = useApi<
-  IPaginatedEntity<ICategoryEntity>
->("/categories", {
-  key: "categories",
-  params: query.result,
-});
+const { data, status, error, refresh } = useApi<IPaginatedEntity<IBrandEntity>>(
+  "/brands",
+  {
+    key: "brands",
+    params: query.result,
+  }
+);
 
 const pagination = useApiPagination(query.model, data);
 
 const entityColumns = useEntityColumns();
-const columns: TableColumn<ICategoryEntity>[] = [
+const columns: TableColumn<IBrandEntity>[] = [
   {
     accessorKey: "name",
     header: "Nome",
+  },
+  {
+    accessorKey: "email",
+    header: "E-mail",
+  },
+  {
+    accessorKey: "phone",
+    header: "Telefone",
   },
   ...entityColumns,
   {
@@ -45,7 +55,7 @@ const columns: TableColumn<ICategoryEntity>[] = [
   },
 ];
 
-const getRowActions = (item: ICategoryEntity) => {
+const getRowActions = (item: IBrandEntity) => {
   return [
     [
       {
@@ -69,7 +79,7 @@ const getRowActions = (item: ICategoryEntity) => {
         icon: "i-lucide-edit",
         onClick: () => {
           action.value = {
-            category: item,
+            brand: item,
             type: "edit",
           };
         },
@@ -81,7 +91,7 @@ const getRowActions = (item: ICategoryEntity) => {
         icon: "i-lucide-trash-2",
         onClick: () => {
           action.value = {
-            category: item,
+            brand: item,
             type: "delete",
           };
         },
@@ -90,7 +100,7 @@ const getRowActions = (item: ICategoryEntity) => {
   ] satisfies DropdownMenuItem[][];
 };
 
-const removeCategory = async (category: ICategoryEntity) => {
+const removeBrand = async (category: IBrandEntity) => {
   if (data.value) {
     const totalItems = Math.max(0, data.value.totalItems - 1);
     const totalPages = Math.ceil(totalItems / data.value.limit);
@@ -111,7 +121,7 @@ const removeCategory = async (category: ICategoryEntity) => {
   await refresh();
 };
 
-const updateCategory = async (category: ICategoryEntity, isNew: boolean) => {
+const updateBrand = async (category: IBrandEntity, isNew: boolean) => {
   if (data.value) {
     if (isNew) {
       const totalItems = data.value.totalItems + 1;
@@ -147,14 +157,14 @@ const updateCategory = async (category: ICategoryEntity, isNew: boolean) => {
 </script>
 
 <template>
-  <LayoutPage title="Categorias" description="Gestão de categorias de produtos">
+  <LayoutPage title="Marcas" description="Gestão de marcas de produtos">
     <LayoutPageHeaderActions>
       <UButton
         color="primary"
         variant="soft"
         icon="i-lucide-plus"
         class="cursor-pointer"
-        aria-label="Cadastrar categoria"
+        aria-label="Cadastrar marca"
         @click="
           () => {
             action = {
@@ -163,7 +173,7 @@ const updateCategory = async (category: ICategoryEntity, isNew: boolean) => {
           }
         "
       >
-        Categoria
+        Marca
       </UButton>
     </LayoutPageHeaderActions>
 
@@ -173,8 +183,9 @@ const updateCategory = async (category: ICategoryEntity, isNew: boolean) => {
           v-model.trim="query.modelDebounce.name"
           type="text"
           placeholder="Pesquisar por nome"
-          class="w-full md:w-xs"
         />
+
+        <CategorySelectMenu v-model="query.modelDebounce.categoryId" />
       </FilterGroup>
 
       <UButton
@@ -227,7 +238,7 @@ const updateCategory = async (category: ICategoryEntity, isNew: boolean) => {
           class="px-6 flex flex-col items-center justify-center gap-4"
         >
           <UIcon name="i-system-uicons-box-open" size="54" />
-          <p class="text-lg">Nenhuma categoria encontrada</p>
+          <p class="text-lg">Nenhuma marca encontrada</p>
         </div>
       </template>
 
@@ -256,20 +267,20 @@ const updateCategory = async (category: ICategoryEntity, isNew: boolean) => {
       <UPagination v-bind="pagination.props.value" />
     </div>
 
-    <CategoryDeleteModal
-      v-if="action?.type === 'delete' && action?.category"
+    <BrandDeleteModal
+      v-if="action?.type === 'delete' && action?.brand"
       open
-      :category="action?.category"
+      :brand="action?.brand"
       @after:leave="action = null"
-      @success="removeCategory"
+      @success="removeBrand"
     />
 
-    <CategoryFormModal
+    <BrandFormModal
       v-if="action?.type === 'edit' || action?.type === 'create'"
       open
-      :category="action?.category"
+      :brand="action?.brand"
       @after:leave="action = null"
-      @success="updateCategory"
+      @success="updateBrand"
     />
   </LayoutPage>
 </template>

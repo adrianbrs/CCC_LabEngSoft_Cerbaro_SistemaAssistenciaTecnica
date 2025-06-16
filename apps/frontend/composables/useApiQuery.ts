@@ -131,21 +131,27 @@ export const useApiQuery = <T extends ApiQuery>(
     { debounce: () => toValue(options)?.debounce ?? 300 }
   );
 
-  watch(model, () => {
-    isDirty.value = !_.isEqual(toValue(model), computedInitialQuery);
-    Object.assign(modelDebounce, model);
-  });
-
   watch(computedInitialQuery, (newInitialQuery) => {
     if (!isDirty.value) {
       Object.assign(model, newInitialQuery);
     }
   });
 
+  watch(model, (newModel) => {
+    Object.assign(modelDebounce, toRaw(newModel));
+  });
+
   const reset = (keys?: (keyof T)[]) => {
-    const internalKeys = (
-      keys?.length ? keys : Object.keys(computedInitialQuery.value)
-    ) as (keyof T)[];
+    const internalKeys = [
+      ...new Set(
+        (keys?.length
+          ? keys
+          : Object.keys(computedInitialQuery.value).concat(
+              Object.keys(toRaw(model)),
+              Object.keys(toRaw(modelDebounce))
+            )) as (keyof T)[]
+      ),
+    ];
 
     internalKeys.forEach((key) => {
       if (key in computedInitialQuery.value) {
@@ -182,6 +188,13 @@ export const useApiQuery = <T extends ApiQuery>(
         );
       },
       _.cloneDeep(toValue(model))
+    );
+  });
+
+  watch(result, (newResult) => {
+    isDirty.value = !_.isEqual(
+      _.omitBy(newResult, _.isNil),
+      _.omitBy(toValue(computedInitialQuery), _.isNil)
     );
   });
 

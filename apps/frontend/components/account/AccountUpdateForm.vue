@@ -129,6 +129,7 @@ defineExpose({
           <UInput
             v-model="model.phone"
             v-maska
+            type="tel"
             class="w-full"
             data-maska="['(##) # ####-####', '(##) ####-####']"
             placeholder="(00) 0 0000-0000"

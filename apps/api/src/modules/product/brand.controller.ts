@@ -43,7 +43,7 @@ export class BrandController {
     return this.brandService.update(id, brandDto);
   }
 
-  @Delete('/id')
+  @Delete('/:id')
   @Authorize(UserRole.ADMIN)
   @HttpCode(204)
   async delete(@Param('id') id: string) {
