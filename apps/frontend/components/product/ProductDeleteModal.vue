@@ -19,7 +19,11 @@ const { execute, error, status, refresh } = useApi(
   {
     method: "DELETE",
     immediate: false,
-    onResponse() {
+    onResponse({ response }) {
+      if (response.status < 200 || response.status >= 300) {
+        return;
+      }
+
       emit("success", props.product);
       open.value = false;
 
@@ -71,6 +75,8 @@ const loading = computed(() => status.value === "pending");
         variant="solid"
         title="Oops! Ocorreu um erro"
         description="Não foi possível remover o produto, tente novamente mais tarde."
+        icon="i-lucide-alert-triangle"
+        class="mt-4"
         :actions="[
           {
             label: 'Tentar novamente',

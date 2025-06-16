@@ -1,4 +1,4 @@
-import { ApiError } from '@/shared/api.error';
+import { ApiError } from '@/shared/errors';
 import { HttpStatus } from '@nestjs/common';
 
 export class AccountAlreadyVerifiedError extends ApiError {

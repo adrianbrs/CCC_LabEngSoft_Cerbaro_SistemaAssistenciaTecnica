@@ -19,7 +19,11 @@ const { execute, error, status, refresh } = useApi(
   {
     method: "DELETE",
     immediate: false,
-    onResponse() {
+    onResponse({ response }) {
+      if (response.status < 200 || response.status >= 300) {
+        return;
+      }
+
       emit("success", props.brand);
       open.value = false;
 
@@ -63,11 +67,23 @@ const loading = computed(() => status.value === "pending");
       />
 
       <UAlert
-        v-if="error"
+        v-if="error?.data?.code === 'COLLECTION_NOT_EMPTY'"
+        color="error"
+        variant="solid"
+        title="Não foi possível remover a marca"
+        description="A marca possui produtos associados e não pode ser removida. Por favor, remova os produtos associados antes de tentar novamente."
+        icon="i-lucide-alert-triangle"
+        class="mt-4"
+      />
+
+      <UAlert
+        v-else-if="error"
         color="error"
         variant="solid"
         title="Oops! Ocorreu um erro"
         description="Não foi possível remover a marca, tente novamente mais tarde."
+        icon="i-lucide-alert-triangle"
+        class="mt-4"
         :actions="[
           {
             label: 'Tentar novamente',

@@ -6,6 +6,8 @@ import { CategoryQueryDto } from './dtos/category-query.dto';
 import { ILike, Not } from 'typeorm';
 import { Paginated } from '@/shared/pagination';
 import { DuplicateCategoryError } from './errors/duplicate-category.error';
+import { CollectionNotEmptyError } from '@/shared/errors';
+import { Product } from './models/product.entity';
 
 @Injectable()
 export class CategoryService {
@@ -102,6 +104,24 @@ export class CategoryService {
         id: categoryId,
       },
     });
+
+    if (category) {
+      // Check if there are any products associated with this brand
+      const hasProducts = await Product.exists({
+        where: {
+          category: {
+            id: category.id,
+          },
+        },
+      });
+
+      if (hasProducts) {
+        this.logger.warn(
+          `Category with ID ${category.id} cannot be deleted because it has associated products.`,
+        );
+        throw new CollectionNotEmptyError(category);
+      }
+    }
 
     await category?.softRemove();
   }

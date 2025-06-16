@@ -6,6 +6,8 @@ import { BrandFiltersDto } from './dtos/brand-filters.dto';
 import { ILike, Not } from 'typeorm';
 import { Paginated } from '@/shared/pagination';
 import { DuplicateBrandError } from './errors/duplicate-brand.error';
+import { Product } from './models/product.entity';
+import { CollectionNotEmptyError } from '@/shared/errors';
 
 @Injectable()
 export class BrandService {
@@ -106,6 +108,24 @@ export class BrandService {
         id: brandId,
       },
     });
+
+    if (brand) {
+      // Check if there are any products associated with this brand
+      const hasProducts = await Product.exists({
+        where: {
+          brand: {
+            id: brand.id,
+          },
+        },
+      });
+
+      if (hasProducts) {
+        this.logger.warn(
+          `Brand with ID ${brandId} cannot be deleted because it has associated products.`,
+        );
+        throw new CollectionNotEmptyError(brand);
+      }
+    }
 
     await brand?.softRemove();
   }
