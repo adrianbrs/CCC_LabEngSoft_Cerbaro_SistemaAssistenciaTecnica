@@ -4,6 +4,6 @@ import { ICoreEntity } from "./core.entity";
 
 export interface INotificationEntity extends ICoreEntity{
     user: IUserEntity;
-    ticket: ITicketEntity;
     content: string;
+    read: boolean;
 }

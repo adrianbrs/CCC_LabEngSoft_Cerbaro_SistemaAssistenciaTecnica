@@ -10,8 +10,10 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CsrfModule } from './modules/csrf/csrf.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AddressModule } from './modules/address/address.module';
-import { SharedModule } from './modules/shared/shared.module';
 import { ReviewModule } from './modules/review/review.module';
+import { NotificationModule} from './modules/notification/notification.module';
+import { SharedModule } from './modules/shared/shared.module';
+
 
 @Module({
   imports: [
@@ -43,6 +45,7 @@ import { ReviewModule } from './modules/review/review.module';
     CsrfModule,
     AddressModule,
     ReviewModule,
+    NotificationModule,
     SharedModule,
   ],
   providers: [
