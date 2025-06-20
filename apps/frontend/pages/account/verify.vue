@@ -32,7 +32,7 @@ const {
   query: { user, token },
 } = useRoute();
 
-const { error, pending, refresh } = useApi(`/users/${user}/verify`, {
+const { error, pending, refresh } = useApiQuery(`/users/${user}/verify`, {
   method: "POST",
   retry: 1,
   body: {

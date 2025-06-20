@@ -11,18 +11,13 @@ defineProps<{
 }>();
 const model = defineModel<string>();
 
-const query = useApiQuery<ICategoryQuery>({
-  name: "",
+const { data, status, query } = useApiQuery<
+  IPaginatedEntity<ICategoryEntity>,
+  ICategoryQuery
+>("/categories", {
+  key: "categories-select-menu",
+  lazy: true,
 });
-
-const { data, status } = useApi<IPaginatedEntity<ICategoryEntity>>(
-  "/categories",
-  {
-    key: "categories-select-menu",
-    params: query.result,
-    lazy: true,
-  }
-);
 </script>
 
 <template>

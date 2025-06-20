@@ -18,7 +18,7 @@ const {
   error,
   status,
   clear,
-} = useApi<ICepInfoEntity>(() => uri`/address/cep/${zipCode.value}`, {
+} = useApiQuery<ICepInfoEntity>(() => uri`/address/cep/${zipCode.value}`, {
   immediate: false,
   watch: false,
 });

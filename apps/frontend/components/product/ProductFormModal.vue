@@ -26,7 +26,7 @@ const state = reactive<ProductFormData>({
   brandId: props.product?.brand?.id ?? "",
   categoryId: props.product?.category?.id ?? "",
 });
-const { $api } = useNuxtApp();
+const api = useApi();
 const loading = ref(false);
 const error = ref<Error | FetchError | undefined>();
 
@@ -39,12 +39,12 @@ const onSubmit = async ({ data }: FormSubmitEvent<ProductFormData>) => {
     let res: IProductEntity;
 
     if (props.product) {
-      res = await $api<IProductEntity>(uri`/products/${props.product.id}`, {
+      res = await api<IProductEntity>(uri`/products/${props.product.id}`, {
         method: "PATCH",
         body,
       });
     } else {
-      res = await $api<IProductEntity>("/products", {
+      res = await api<IProductEntity>("/products", {
         method: "POST",
         body,
       });

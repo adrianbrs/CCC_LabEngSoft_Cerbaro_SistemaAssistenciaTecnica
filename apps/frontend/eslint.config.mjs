@@ -12,5 +12,11 @@ export default withNuxt({
           'ImportDeclaration[source.value="lodash-es"] ImportDefaultSpecifier',
       },
     ],
+    "@typescript-eslint/unified-signatures": [
+      "error",
+      {
+        ignoreOverloadsWithDifferentJSDoc: true,
+      },
+    ],
   },
 });

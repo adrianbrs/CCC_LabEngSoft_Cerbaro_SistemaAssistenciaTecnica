@@ -24,7 +24,7 @@ const isEditing = computed(() => !!props.category);
 const state = reactive<CategoryFormData>({
   name: props.category?.name ?? "",
 });
-const { $api } = useNuxtApp();
+const api = useApi();
 const loading = ref(false);
 const error = ref<Error | FetchError | undefined>();
 
@@ -35,12 +35,12 @@ const onSubmit = async ({ data }: FormSubmitEvent<CategoryFormData>) => {
     let res: ICategoryEntity;
 
     if (props.category) {
-      res = await $api<ICategoryEntity>(uri`/categories/${props.category.id}`, {
+      res = await api<ICategoryEntity>(uri`/categories/${props.category.id}`, {
         method: "PATCH",
         body: data,
       });
     } else {
-      res = await $api<ICategoryEntity>("/categories", {
+      res = await api<ICategoryEntity>("/categories", {
         method: "POST",
         body: data,
       });

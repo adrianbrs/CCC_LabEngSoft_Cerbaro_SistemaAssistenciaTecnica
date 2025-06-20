@@ -8,14 +8,14 @@ const props = defineProps<{
 }>();
 const model = defineModel<string>();
 
-const query = useApiQuery<IBrandQuery>(() => ({
-  categoryId: props.categoryId ?? undefined,
-}));
-
-const { data, status } = useApi<IPaginatedEntity<IBrandEntity>>("/brands", {
-  key: "brands-select-menu",
-  params: query.result,
+const { data, status, query } = useApiQuery<
+  IPaginatedEntity<IBrandEntity>,
+  IBrandQuery
+>("/brands", {
   lazy: true,
+  query: () => ({
+    categoryId: props.categoryId ?? undefined,
+  }),
 });
 </script>
 

@@ -1,11 +1,9 @@
-import type { UseFetchOptions } from "nuxt/app";
+export type {
+  ApiFetch,
+  ApiErrorResponse,
+  ApiFetchOptions,
+} from "~/plugins/api";
 
-export function useApi<T>(
-  url: string | Request | Ref<string | Request> | (() => string | Request),
-  options?: UseFetchOptions<T>
-) {
-  return useFetch(url, {
-    ...options,
-    $fetch: useNuxtApp().$api as typeof $fetch,
-  });
+export function useApi() {
+  return useNuxtApp().$api;
 }

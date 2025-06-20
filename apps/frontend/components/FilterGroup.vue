@@ -81,7 +81,7 @@ const getMinWidth = (
   return relLeft + width + relRight;
 };
 
-useResizeObserver(container, () => {
+const updateHiddenIndexes = () => {
   const containerEl = container.value;
   if (!containerEl) return;
 
@@ -108,7 +108,10 @@ useResizeObserver(container, () => {
       }
     }
   );
-});
+};
+
+useResizeObserver(container, updateHiddenIndexes);
+watch(triggerRef, updateHiddenIndexes);
 
 const elements = computed(() => {
   if (!itemRefs.value) {

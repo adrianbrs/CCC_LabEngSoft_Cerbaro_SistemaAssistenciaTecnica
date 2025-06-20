@@ -23,7 +23,7 @@ const state = reactive<BrandFormData>({
   email: props.brand?.email ?? "",
   phone: props.brand?.phone ?? "",
 });
-const { $api } = useNuxtApp();
+const api = useApi();
 const loading = ref(false);
 const error = ref<Error | FetchError | undefined>();
 
@@ -36,12 +36,12 @@ const onSubmit = async ({ data }: FormSubmitEvent<BrandFormData>) => {
     let res: IBrandEntity;
 
     if (props.brand) {
-      res = await $api<IBrandEntity>(uri`/brands/${props.brand.id}`, {
+      res = await api<IBrandEntity>(uri`/brands/${props.brand.id}`, {
         method: "PATCH",
         body,
       });
     } else {
-      res = await $api<IBrandEntity>("/brands", {
+      res = await api<IBrandEntity>("/brands", {
         method: "POST",
         body,
       });

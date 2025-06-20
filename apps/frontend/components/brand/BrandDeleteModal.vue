@@ -14,7 +14,7 @@ const emit = defineEmits<{
 
 const toast = useToast();
 
-const { execute, error, status, refresh } = useApi(
+const { execute, error, status, refresh } = useApiQuery(
   computed(() => `/brands/${props.brand.id}`),
   {
     method: "DELETE",
