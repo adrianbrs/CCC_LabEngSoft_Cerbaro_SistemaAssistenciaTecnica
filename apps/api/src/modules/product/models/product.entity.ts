@@ -5,8 +5,8 @@ import { Brand } from './brand.entity';
 import { IProductEntity } from '@musat/core';
 
 @Entity()
-// Should not allow duplicate products with the same model, brand, and category
-@Index(['model', 'brand', 'category'], { unique: true })
+// Should not allow duplicate products with the same model and brand
+@Index(['model', 'brand'], { unique: true })
 export class Product extends CoreEntity implements IProductEntity {
   @ManyToOne(() => Category, { eager: true })
   @JoinColumn()

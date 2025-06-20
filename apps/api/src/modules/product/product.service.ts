@@ -2,16 +2,21 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ProductDto } from './dtos/product.dto';
 import { Product } from './models/product.entity';
 import { ProductUpdateDto } from './dtos/product-update.dto';
-import { DataSource, ILike, Not } from 'typeorm';
+import { ILike, Not } from 'typeorm';
 import { ProductFiltersDto } from './dtos/product-filters.dto';
 import { Paginated } from '@/shared/pagination';
 import { DuplicateProductError } from './errors/duplicate-product.error';
+import { CategoryService } from './category.service';
+import { BrandService } from './brand.service';
 
 @Injectable()
 export class ProductService {
   private readonly logger = new Logger(ProductService.name);
 
-  constructor(private readonly ds: DataSource) {
+  constructor(
+    private readonly categoryService: CategoryService,
+    private readonly brandService: BrandService,
+  ) {
     this.logger.log('ProductService initialized');
   }
 
@@ -71,9 +76,10 @@ export class ProductService {
 
   async update(
     productId: Product['id'],
-    updates: ProductUpdateDto,
+    updateDto: ProductUpdateDto,
   ): Promise<Product> {
     this.logger.log(`Updating product ${productId}`);
+    const { categoryId, brandId, ...updates } = updateDto;
 
     const product = await Product.findOneOrFail({
       where: {
@@ -81,12 +87,11 @@ export class ProductService {
       },
     });
 
-    // Check for existing product with the same model, brand, and category
+    // Check for existing product with the same model and brand
     const existingProduct = await Product.findOne({
       where: {
         model: ILike(updates.model ?? product.model),
-        brand: { id: updates.brandId ?? product.brand.id },
-        category: { id: updates.categoryId ?? product.category.id },
+        brand: { id: brandId ?? product.brand.id },
         id: Not(productId), // Exclude the current product
       },
     });
@@ -96,6 +101,14 @@ export class ProductService {
     }
 
     Product.merge(product, { ...updates });
+
+    // Update relations
+    if (categoryId && categoryId !== product.category.id) {
+      product.category = await this.categoryService.getById(categoryId);
+    }
+    if (brandId && brandId !== product.brand.id) {
+      product.brand = await this.brandService.getById(brandId);
+    }
 
     return product.save();
   }
