@@ -4,7 +4,7 @@ import { Brand } from '../models/brand.entity';
 import { PaginatedQueryDto } from '@/shared/pagination';
 import { IProductQuery } from '@musat/core';
 
-export class ProductFiltersDto
+export class ProductQueryDto
   extends PaginatedQueryDto
   implements IProductQuery
 {

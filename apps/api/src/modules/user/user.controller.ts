@@ -18,7 +18,7 @@ import { UserUpdateDto } from './dtos/user-update.dto';
 import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 import { UserRole } from '@musat/core';
 import { UserInternalUpdateDto } from './dtos/user-internal-update.dto';
-import { UserFiltersDto } from './dtos/user-filters.dto';
+import { UserQueryDto } from './dtos/user-query.dto';
 
 @Controller('users')
 export class UserController {
@@ -26,8 +26,8 @@ export class UserController {
 
   @Get()
   @Authorize(UserRole.ADMIN)
-  async getAll(@Query() filters: UserFiltersDto) {
-    return this.userService.getAll(filters);
+  async getAll(@Query() query: UserQueryDto) {
+    return this.userService.getAll(query);
   }
 
   /**
@@ -86,14 +86,14 @@ export class UserController {
   @Patch(':id')
   @Authorize(UserRole.ADMIN)
   updateOne(
-    @Param('id') userId: string,
+    @Param('id', ParseUUIDPipe) userId: string,
     @Body() updateDto: UserInternalUpdateDto,
   ) {
     return this.userService.internalUpdate(userId, updateDto);
   }
 
   @Get(':id')
-  async getOne(@Param('id') id: string) {
+  async getOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.getOne(id);
   }
 }

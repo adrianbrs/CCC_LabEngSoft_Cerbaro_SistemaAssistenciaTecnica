@@ -1,8 +1,8 @@
 import { PaginatedQueryDto } from '@/shared/pagination';
-import { UserRole } from '@musat/core';
+import { IUserQuery, UserRole } from '@musat/core';
 import { IsEnum, IsOptional, MaxLength } from 'class-validator';
 
-export class UserFiltersDto extends PaginatedQueryDto {
+export class UserQueryDto extends PaginatedQueryDto implements IUserQuery {
   @MaxLength(100)
   @IsOptional()
   name?: string;

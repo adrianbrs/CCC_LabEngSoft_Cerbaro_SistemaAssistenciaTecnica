@@ -70,6 +70,10 @@ async function bootstrap() {
 
   app.use(cookieParser(COOKIE_SECRET));
 
+  // Allows complex query strings in URLs
+  // https://docs.nestjs.com/controllers#query-parameters
+  app.set('query parser', 'extended');
+
   const config = new DocumentBuilder()
     .setTitle('Musat API')
     .setDescription('Core API for the Musat application')

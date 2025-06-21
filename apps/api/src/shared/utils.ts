@@ -48,3 +48,12 @@ export function createDecoratorsWithKey<TParam, TTransformed>(
   decoratorFn.KEY = key;
   return decoratorFn;
 }
+
+export function isES6Class(obj: object): boolean {
+  return !!(
+    typeof obj === 'function' &&
+    /^class\s/.test(Function.prototype.toString.call(obj) as string) &&
+    (obj.prototype as unknown) &&
+    Object.getPrototypeOf(obj.prototype) === Object.prototype
+  );
+}

@@ -16,18 +16,20 @@ export class CategoryService {
   async getAll(query?: CategoryQueryDto): Promise<Paginated<Category>> {
     this.logger.log(`Fetching all categories`, query);
 
-    const result = await Category.findAndCount({
-      where: {
-        ...(query?.name && {
-          name: ILike(`%${query?.name}%`),
-        }),
+    const result = await Category.findPaginated(
+      {
+        where: {
+          ...(query?.name && {
+            name: ILike(`%${query?.name}%`),
+          }),
+        },
       },
-      ...query?.getFindOptions(),
-    });
+      query,
+    );
 
-    this.logger.log(`Found ${result[1]} categories`, query);
+    this.logger.log(`Found ${result.totalItems} categories`, query);
 
-    return Paginated.from(result, query);
+    return result;
   }
 
   async getById(categoryId: Category['id']): Promise<Category> {

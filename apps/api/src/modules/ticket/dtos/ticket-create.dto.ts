@@ -1,8 +1,9 @@
 import { Product } from '@/modules/product/models/product.entity';
-import { IsNotEmpty, Length } from 'class-validator';
+import { IsNotEmpty, IsUUID, Length } from 'class-validator';
 
 export class TicketCreateDto {
   @IsNotEmpty()
+  @IsUUID('4')
   productId: Product['id'];
 
   @IsNotEmpty()

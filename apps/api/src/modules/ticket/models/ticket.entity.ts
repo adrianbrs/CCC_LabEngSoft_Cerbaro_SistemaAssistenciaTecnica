@@ -2,7 +2,14 @@ import { Product } from '@/modules/product/models/product.entity';
 import { User } from '@/modules/user/models/user.entity';
 import { CoreEntity } from '@/shared/core.entity';
 import { ITicketEntity, TicketStatus } from '@musat/core';
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Generated,
+  Index,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
 
 @Entity()
 export class Ticket extends CoreEntity implements ITicketEntity {
@@ -33,4 +40,15 @@ export class Ticket extends CoreEntity implements ITicketEntity {
 
   @Column({ type: 'timestamp', nullable: true })
   closedAt?: Date | undefined;
+
+  /**
+   * Incremental ticket number to keep track of the latest inserted ticket,
+   * as `createdAt` might not be unique due to concurrent ticket creation.
+   *
+   * This is mainly used to find the latest ticket when assigning a technician.
+   */
+  @Index({ unique: true })
+  @Column()
+  @Generated('increment')
+  ticketNumber: number;
 }

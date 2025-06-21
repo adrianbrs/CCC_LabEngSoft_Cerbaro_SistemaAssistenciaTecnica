@@ -12,6 +12,13 @@ import { Product } from '../product/models/product.entity';
 import { TicketUpdateDto } from './dtos/ticket-update.dto';
 import { isAuthorized, UserRole } from '@musat/core';
 import { ReviewService } from '../review/review.service';
+import { TicketQueryDto } from './dtos/ticket-query.dto';
+import { Paginated } from '@/shared/pagination';
+import { TicketUserQueryDto } from './dtos/ticket-user-query.dto';
+import { FindOptionsWhere } from 'typeorm';
+import { DateRange } from '@/shared/dtos';
+import { TicketTechnicianQueryDto } from './dtos/ticket-technician-query.dto';
+import { NoTechniciansAvailableError } from './errors/no-technicians-available.error';
 
 @Injectable()
 export class TicketService {
@@ -22,11 +29,69 @@ export class TicketService {
     private readonly reviewService: ReviewService,
   ) {}
 
-  async getAll() {
-    return Ticket.find();
+  private getWhereOptions(
+    filters?: Partial<TicketQueryDto>,
+  ): FindOptionsWhere<Ticket> {
+    return {
+      ...(filters?.serialNumber && {
+        serialNumber: filters.serialNumber,
+      }),
+      ...(filters?.status && {
+        status: filters.status,
+      }),
+      ...(filters?.productId && {
+        product: {
+          id: filters.productId,
+        },
+      }),
+      ...(filters?.closedAt && {
+        closedAt: DateRange(filters.closedAt),
+      }),
+      ...(filters?.createdAt && {
+        createdAt: DateRange(filters.createdAt),
+      }),
+      ...(filters?.updatedAt && {
+        updatedAt: DateRange(filters.updatedAt),
+      }),
+    };
   }
 
-  async getOne(ticketId: Ticket['id']) {
+  async getAll(query?: TicketQueryDto): Promise<Paginated<Ticket>> {
+    this.logger.log('Fetching all tickets', query);
+
+    const result = await Ticket.findPaginated(
+      {
+        where: this.getWhereOptions(query),
+      },
+      query,
+    );
+
+    this.logger.log(`Found ${result.totalItems} tickets`, query);
+
+    return result;
+  }
+
+  async getOne(user: User, ticketId: Ticket['id']): Promise<Ticket> {
+    if (!isAuthorized(user, UserRole.ADMIN)) {
+      // If user doesn't have admin access, restrict access to their own/assigned tickets
+      return Ticket.findOneOrFail({
+        where: [
+          {
+            id: ticketId,
+            client: {
+              id: user.id,
+            },
+          },
+          {
+            id: ticketId,
+            technician: {
+              id: user.id,
+            },
+          },
+        ],
+      });
+    }
+
     return Ticket.findOneOrFail({
       where: {
         id: ticketId,
@@ -40,7 +105,7 @@ export class TicketService {
    * Notifies the technician via email about the new ticket.
    */
   async create(client: User, ticketDto: TicketCreateDto): Promise<Ticket> {
-    this.logger.log('Creating ticket');
+    this.logger.log(`Creating ticket for user ${client.id}`);
 
     const { productId, ...ticketData } = ticketDto;
 
@@ -48,30 +113,37 @@ export class TicketService {
       where: { id: productId },
     });
 
-    this.logger.log(product);
-
     const technicians = await User.find({
       where: {
         role: UserRole.TECHNICIAN,
       },
+      order: {
+        // Ensure consistent ordering of technicians.
+        // This is important for the round-robin assignment to work correctly.
+        // It's possible to add more fields to the order if needed, but
+        // it should be deterministic and with infrequent changes to ensure
+        // that the round-robin assignment remains consistent.
+        createdAt: 'ASC',
+        // Ensure consistent ordering using a unique field as a secondary sort key
+        id: 'ASC',
+      },
     });
-    this.logger.log(technicians);
 
-    if (technicians.length === 0) {
-      throw new Error('No technician available');
+    if (!technicians.length) {
+      throw new NoTechniciansAvailableError();
     }
 
-    const [lastTicket] = await Ticket.find({
-      order: { createdAt: 'DESC' },
-      relations: ['technician'],
-      take: 1,
+    const lastTicket = await Ticket.findOne({
+      where: {},
+      order: {
+        // Get the last ticket based on auto-incremented ticket number
+        ticketNumber: 'DESC',
+      },
     });
-
-    this.logger.log(lastTicket);
 
     let technician: User;
 
-    if (!lastTicket || !lastTicket.technician) {
+    if (!lastTicket) {
       technician = technicians[0];
     } else {
       const lastTechnicianIndex = technicians.findIndex(
@@ -84,8 +156,6 @@ export class TicketService {
       technician = technicians[nextTechnicianIndex];
     }
 
-    this.logger.log(technician);
-
     const ticket = Ticket.create({
       ...ticketData,
       client,
@@ -93,12 +163,10 @@ export class TicketService {
       technician,
     });
 
-    this.logger.log(ticket);
-
     await Ticket.save(ticket);
 
     this.logger.log(
-      `Ticket ${ticket.id} created and assigned to technician ${technician.name}`,
+      `Ticket ${ticket.id} created and assigned to technician ${technician.id}`,
     );
 
     // await this.userService.sendTicketAssignedEmail(technician);
@@ -111,7 +179,6 @@ export class TicketService {
    * Accessible only to technicians and admins.
    * Only the technician assigned to the ticket can update it.
    */
-
   async update(
     user: User,
     ticketId: Ticket['id'],
@@ -141,42 +208,68 @@ export class TicketService {
   async delete(ticketId: Ticket['id']): Promise<void> {
     this.logger.log(`Deleting ticket with ID: ${ticketId}`);
 
-    const review = await this.reviewService.getByTicket(ticketId);
-
-    if (review) {
-      await this.reviewService.delete(review.id);
-    }
-
     const ticket = await Ticket.findOneOrFail({
       where: {
         id: ticketId,
       },
     });
-    await ticket.remove();
+    await ticket.softRemove();
+
     this.logger.log(`Ticket with ID: ${ticketId} deleted`);
   }
 
-  async getMyTickets(user: User): Promise<Ticket[]> {
-    const tickets = await Ticket.find({
-      where: {
-        client: {
-          id: user.id,
+  async getFromUser(
+    user: User,
+    filters?: TicketUserQueryDto,
+  ): Promise<Paginated<Ticket>> {
+    this.logger.log(`Fetching tickets for user ${user.id}`, filters);
+
+    const result = await Ticket.findPaginated(
+      {
+        where: {
+          ...this.getWhereOptions(filters),
+          client: {
+            id: user.id,
+          },
         },
       },
-    });
+      filters,
+    );
 
-    return tickets;
+    this.logger.log(
+      `Found ${result.totalItems} tickets for user ${user.id}`,
+      filters,
+    );
+
+    return result;
   }
 
-  async getMyTicketsTechnician(user: User): Promise<Ticket[]> {
-    const tickets = await Ticket.find({
-      where: {
-        technician: {
-          id: user.id,
+  async getForTechnician(
+    technician: User,
+    filters?: TicketTechnicianQueryDto,
+  ): Promise<Paginated<Ticket>> {
+    this.logger.log(
+      `Fetching tickets assigned to technician ${technician.id}`,
+      filters,
+    );
+
+    const result = await Ticket.findPaginated(
+      {
+        where: {
+          ...this.getWhereOptions(filters),
+          technician: {
+            id: technician.id,
+          },
         },
       },
-    });
+      filters,
+    );
 
-    return tickets;
+    this.logger.log(
+      `Found ${result.totalItems} tickets assigned to technician ${technician.id}`,
+      filters,
+    );
+
+    return result;
   }
 }

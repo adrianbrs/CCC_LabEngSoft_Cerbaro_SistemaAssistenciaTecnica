@@ -6,7 +6,6 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, plainToInstance } from 'class-transformer';
 import { IsArray, IsNumber, Max, Min } from 'class-validator';
-import { FindManyOptions } from 'typeorm';
 
 export class Paginated<T> implements IPaginatedEntity<T> {
   @IsArray()
@@ -78,12 +77,5 @@ export class PaginatedQueryDto implements IPaginatedQuery {
 
   get skip(): number {
     return (this.page - 1) * this.limit;
-  }
-
-  getFindOptions(): Pick<FindManyOptions, 'skip' | 'take'> {
-    return {
-      skip: this.skip,
-      take: this.limit,
-    };
   }
 }

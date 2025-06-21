@@ -3,7 +3,7 @@ import { IsOptional, IsUUID, MaxLength } from 'class-validator';
 import { Category } from '../models/category.entity';
 import { IBrandQuery } from '@musat/core';
 
-export class BrandFiltersDto extends PaginatedQueryDto implements IBrandQuery {
+export class BrandQueryDto extends PaginatedQueryDto implements IBrandQuery {
   @IsOptional()
   @MaxLength(100)
   name?: string;

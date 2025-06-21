@@ -3,7 +3,7 @@ import { ProductDto } from './dtos/product.dto';
 import { Product } from './models/product.entity';
 import { ProductUpdateDto } from './dtos/product-update.dto';
 import { ILike, Not } from 'typeorm';
-import { ProductFiltersDto } from './dtos/product-filters.dto';
+import { ProductQueryDto } from './dtos/product-query.dto';
 import { Paginated } from '@/shared/pagination';
 import { DuplicateProductError } from './errors/duplicate-product.error';
 import { CategoryService } from './category.service';
@@ -20,27 +20,29 @@ export class ProductService {
     this.logger.log('ProductService initialized');
   }
 
-  async getAll(filters?: ProductFiltersDto): Promise<Paginated<Product>> {
-    this.logger.log(`Fetching all products`, filters);
+  async getAll(query?: ProductQueryDto): Promise<Paginated<Product>> {
+    this.logger.log(`Fetching all products`, query);
 
-    const result = await Product.findAndCount({
-      where: {
-        ...(filters?.model && {
-          model: ILike(`%${filters?.model}%`),
-        }),
-        ...(filters?.brandId && {
-          brand: { id: filters?.brandId },
-        }),
-        ...(filters?.categoryId && {
-          category: { id: filters?.categoryId },
-        }),
+    const result = await Product.findPaginated(
+      {
+        where: {
+          ...(query?.model && {
+            model: ILike(`%${query?.model}%`),
+          }),
+          ...(query?.brandId && {
+            brand: { id: query?.brandId },
+          }),
+          ...(query?.categoryId && {
+            category: { id: query?.categoryId },
+          }),
+        },
       },
-      ...filters?.getFindOptions(),
-    });
+      query,
+    );
 
-    this.logger.log(`Found ${result[1]} products`, filters);
+    this.logger.log(`Found ${result.totalItems} products`, query);
 
-    return Paginated.from(result, filters);
+    return result;
   }
 
   async create(productDto: ProductDto): Promise<Product> {

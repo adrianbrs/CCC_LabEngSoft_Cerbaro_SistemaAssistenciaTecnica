@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -27,7 +28,7 @@ export class CategoryController {
 
   @Get(':id')
   @Authorize(UserRole.TECHNICIAN)
-  async getOne(@Param('id') id: string) {
+  async getOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoryService.getById(id);
   }
 
@@ -40,7 +41,7 @@ export class CategoryController {
   @Patch(':id')
   @Authorize(UserRole.ADMIN)
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCategoryDto: CategoryUpdateDto,
   ) {
     return this.categoryService.update(id, updateCategoryDto);
@@ -49,7 +50,7 @@ export class CategoryController {
   @Delete(':id')
   @Authorize(UserRole.ADMIN)
   @HttpCode(204)
-  async deleteCategory(@Param('id') id: string) {
+  async deleteCategory(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoryService.delete(id);
   }
 }

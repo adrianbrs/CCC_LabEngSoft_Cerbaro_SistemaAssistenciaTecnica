@@ -1,37 +1,62 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
-import { LoggedUser } from '../auth/auth.decorator';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { Authorize, LoggedUser } from '../auth/auth.decorator';
 import { User } from '../user/models/user.entity';
 import { TicketCreateDto } from './dtos/ticket-create.dto';
 import { TicketService } from './ticket.service';
 import { TicketUpdateDto } from './dtos/ticket-update.dto';
-import { Ticket } from './models/ticket.entity';
+import { UserRole } from '@musat/core';
+import { TicketQueryDto } from './dtos/ticket-query.dto';
+import { ApiNestedQuery } from '@/shared/decorators';
+import { TicketUserQueryDto } from './dtos/ticket-user-query.dto';
+import { TicketTechnicianQueryDto } from './dtos/ticket-technician-query.dto';
 
 @Controller('tickets')
 export class TicketController {
-  constructor(private readonly ticketService: TicketService) { }
+  constructor(private readonly ticketService: TicketService) {}
 
   /**
-   * Returns all tickets 
+   * Returns all tickets
    */
   @Get()
-  async getAll() {
-    return this.ticketService.getAll();
+  @Authorize(UserRole.ADMIN)
+  @ApiNestedQuery(TicketQueryDto)
+  async getAll(@Query() query: TicketQueryDto) {
+    return this.ticketService.getAll(query);
   }
 
   /**
    * Returns all the tickets created by the logged user
    */
-  @Get('me/tickets')
-  async getMyTickets(@LoggedUser() user: User) {
-    return this.ticketService.getMyTickets(user);
+  @Get('user')
+  @ApiNestedQuery(TicketUserQueryDto)
+  async getFromUser(
+    @LoggedUser() user: User,
+    @Query() query: TicketUserQueryDto,
+  ) {
+    return this.ticketService.getFromUser(user, query);
   }
 
   /**
    * Returns all the tickets assigned to the logged technician
    */
-  @Get('me/technician/tickets')
-  async getMyTicketsTechnician(@LoggedUser() user: User){
-    return this.ticketService.getMyTicketsTechnician(user);
+  @Get('technician')
+  @Authorize(UserRole.TECHNICIAN)
+  @ApiNestedQuery(TicketTechnicianQueryDto)
+  async getForTechnician(
+    @LoggedUser() user: User,
+    @Query() query: TicketTechnicianQueryDto,
+  ) {
+    return this.ticketService.getForTechnician(user, query);
   }
 
   @Post()
@@ -39,17 +64,27 @@ export class TicketController {
     return this.ticketService.create(client, createDto);
   }
 
-  @Patch()
-  async update(
-    technician: User,
-    ticketId: Ticket['id'],
-    updates: TicketUpdateDto,
+  @Get(':id')
+  async getOne(
+    @LoggedUser() user: User,
+    @Param('id', ParseUUIDPipe) ticketId: string,
+  ) {
+    return this.ticketService.getOne(user, ticketId);
+  }
+
+  @Patch(':id')
+  @Authorize(UserRole.TECHNICIAN)
+  async updateOne(
+    @LoggedUser() technician: User,
+    @Param('id', ParseUUIDPipe) ticketId: string,
+    @Body() updates: TicketUpdateDto,
   ) {
     return this.ticketService.update(technician, ticketId, updates);
   }
 
-  @Delete('/id')
-  async delete(@Param('id') id: string) {
-    return this.ticketService.delete(id);
+  @Delete(':id')
+  @Authorize(UserRole.ADMIN)
+  async delete(@Param('id', ParseUUIDPipe) ticketId: string) {
+    return this.ticketService.delete(ticketId);
   }
 }

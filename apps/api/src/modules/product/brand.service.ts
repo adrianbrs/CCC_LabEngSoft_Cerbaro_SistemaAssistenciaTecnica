@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Brand } from './models/brand.entity';
 import { BrandDto } from './dtos/brand.dto';
 import { BrandUpdateDto } from './dtos/brand-update.dto';
-import { BrandFiltersDto } from './dtos/brand-filters.dto';
+import { BrandQueryDto } from './dtos/brand-query.dto';
 import { ILike, Not } from 'typeorm';
 import { Paginated } from '@/shared/pagination';
 import { DuplicateBrandError } from './errors/duplicate-brand.error';
@@ -47,28 +47,30 @@ export class BrandService {
     return brand;
   }
 
-  async getAll(filters?: BrandFiltersDto): Promise<Paginated<Brand>> {
-    this.logger.log('Fetching all brands', filters);
+  async getAll(query?: BrandQueryDto): Promise<Paginated<Brand>> {
+    this.logger.log('Fetching all brands', query);
 
-    const result = await Brand.findAndCount({
-      where: {
-        ...(filters?.name && {
-          name: ILike(`%${filters.name}%`),
-        }),
-        ...(filters?.categoryId && {
-          products: {
-            category: {
-              id: filters.categoryId,
+    const result = await Brand.findPaginated(
+      {
+        where: {
+          ...(query?.name && {
+            name: ILike(`%${query.name}%`),
+          }),
+          ...(query?.categoryId && {
+            products: {
+              category: {
+                id: query.categoryId,
+              },
             },
-          },
-        }),
+          }),
+        },
       },
-      ...filters?.getFindOptions(),
-    });
+      query,
+    );
 
-    this.logger.log(`Found ${result[1]} brands`, filters);
+    this.logger.log(`Found ${result.totalItems} brands`, query);
 
-    return Paginated.from(result, filters);
+    return result;
   }
 
   async update(brandId: Brand['id'], updates: BrandUpdateDto): Promise<Brand> {

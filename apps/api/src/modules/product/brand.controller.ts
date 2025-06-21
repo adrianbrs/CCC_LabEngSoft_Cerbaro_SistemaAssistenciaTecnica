@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -14,20 +15,20 @@ import { BrandDto } from './dtos/brand.dto';
 import { BrandUpdateDto } from './dtos/brand-update.dto';
 import { UserRole } from '@musat/core';
 import { Authorize } from '../auth/auth.decorator';
-import { BrandFiltersDto } from './dtos/brand-filters.dto';
+import { BrandQueryDto } from './dtos/brand-query.dto';
 
 @Controller('brands')
 export class BrandController {
   constructor(private readonly brandService: BrandService) {}
 
   @Get()
-  async getAll(@Query() filters: BrandFiltersDto) {
-    return this.brandService.getAll(filters);
+  async getAll(@Query() query: BrandQueryDto) {
+    return this.brandService.getAll(query);
   }
 
   @Get('/:id')
   @Authorize(UserRole.TECHNICIAN)
-  async getOne(@Param('id') id: string) {
+  async getOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.brandService.getById(id);
   }
 
@@ -39,14 +40,17 @@ export class BrandController {
 
   @Patch('/:id')
   @Authorize(UserRole.ADMIN)
-  async update(@Body() brandDto: BrandUpdateDto, @Param('id') id: string) {
+  async update(
+    @Body() brandDto: BrandUpdateDto,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.brandService.update(id, brandDto);
   }
 
   @Delete('/:id')
   @Authorize(UserRole.ADMIN)
   @HttpCode(204)
-  async delete(@Param('id') id: string) {
+  async delete(@Param('id', ParseUUIDPipe) id: string) {
     return this.brandService.delete(id);
   }
 }

@@ -21,7 +21,7 @@ import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 import { Messages } from '@/constants/messages';
 import { AccountVerificationError } from './errors/account-verification.error';
 import { UserInternalUpdateDto } from './dtos/user-internal-update.dto';
-import { UserFiltersDto } from './dtos/user-filters.dto';
+import { UserQueryDto } from './dtos/user-query.dto';
 import { Paginated } from '@/shared/pagination';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
@@ -298,24 +298,28 @@ export class UserService {
     });
   }
 
-  async getAll(filters?: UserFiltersDto): Promise<Paginated<User>> {
-    this.logger.log('Fetching users with filters', filters);
+  async getAll(query?: UserQueryDto): Promise<Paginated<User>> {
+    this.logger.log('Fetching users with filters', query);
 
-    const result = await User.findAndCount({
-      where: {
-        ...(filters?.name && {
-          name: ILike(`%${filters.name}%`),
-        }),
-        ...(filters?.role && {
-          role: filters.role,
-        }),
+    const result = await User.findPaginated(
+      {
+        where: {
+          ...(query?.name && {
+            name: ILike(`%${query.name}%`),
+          }),
+          ...(query?.role && {
+            role: query.role,
+          }),
+        },
+        order: {
+          createdAt: 'DESC',
+        },
       },
-      order: {
-        createdAt: 'DESC',
-      },
-      ...filters?.getFindOptions(),
-    });
+      query,
+    );
 
-    return Paginated.from(result, filters);
+    this.logger.log(`Found ${result.totalItems} users`, query);
+
+    return result;
   }
 }

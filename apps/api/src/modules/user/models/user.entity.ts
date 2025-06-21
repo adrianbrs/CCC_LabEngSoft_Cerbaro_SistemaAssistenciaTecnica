@@ -1,14 +1,18 @@
 import { CoreEntity } from '@/shared/core.entity';
-import { IUserEntity, UserRole } from '@musat/core';
+import { formatPhone, IUserEntity, UserRole } from '@musat/core';
 import { Column, Entity, Index, JoinColumn, OneToOne } from 'typeorm';
 import { Address } from '../../address/models/address.entity';
-import { Exclude } from 'class-transformer';
+import { Exclude, Transform } from 'class-transformer';
 import { hash, compare } from 'bcrypt';
 import { BCRYPT_SALT_ROUNDS } from '@/constants/env';
+import { formatCpf } from '@musat/core';
 
 @Entity()
 export class User extends CoreEntity implements IUserEntity {
   @Column({ type: 'varchar', length: 11, unique: true })
+  @Transform(({ value }) => formatCpf(value as string), {
+    toPlainOnly: true,
+  })
   cpf: string;
 
   @Column({ type: 'varchar', length: 100 })
@@ -37,6 +41,9 @@ export class User extends CoreEntity implements IUserEntity {
   verificationToken: string | null;
 
   @Column({ type: 'varchar', length: 14, nullable: false })
+  @Transform(({ value }) => formatPhone(value as string), {
+    toPlainOnly: true,
+  })
   phone: string;
 
   @OneToOne(() => Address, { cascade: true, eager: true })

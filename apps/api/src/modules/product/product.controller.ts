@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -13,7 +14,7 @@ import { ProductService } from './product.service';
 import { Product } from './models/product.entity';
 import { ProductDto } from './dtos/product.dto';
 import { ProductUpdateDto } from './dtos/product-update.dto';
-import { ProductFiltersDto } from './dtos/product-filters.dto';
+import { ProductQueryDto } from './dtos/product-query.dto';
 import { Authorize } from '../auth/auth.decorator';
 import { UserRole } from '@musat/core';
 
@@ -22,13 +23,13 @@ export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Get()
-  async getAll(@Query() filters: ProductFiltersDto) {
-    return this.productService.getAll(filters);
+  async getAll(@Query() query: ProductQueryDto) {
+    return this.productService.getAll(query);
   }
 
   @Get(':id')
   @Authorize(UserRole.TECHNICIAN)
-  async getOne(@Param('id') id: string) {
+  async getOne(@Param('id', ParseUUIDPipe) id: string) {
     return Product.findOneOrFail({ where: { id } });
   }
 
@@ -41,7 +42,7 @@ export class ProductController {
   @Patch(':id')
   @Authorize(UserRole.ADMIN)
   async updateOne(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDto: ProductUpdateDto,
   ) {
     return this.productService.update(id, updateDto);
@@ -50,7 +51,7 @@ export class ProductController {
   @Delete(':id')
   @HttpCode(204)
   @Authorize(UserRole.ADMIN)
-  async deleteOne(@Param('id') id: string) {
+  async deleteOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.productService.delete(id);
   }
 }
