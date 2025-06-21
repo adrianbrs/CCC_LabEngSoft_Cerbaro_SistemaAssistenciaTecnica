@@ -1,11 +1,11 @@
 import { MailgunMessageData, MailgunService } from '@/lib/mailgun';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { User } from './models/user.entity';
 import { AccountAlreadyVerifiedError } from './errors/account-already-verified.error';
 import { MissingVerificationTokenError } from './errors/missing-verification-token.error';
 import { UserRegisterDto } from './dtos/user-register.dto';
 import { Address } from '../address/models/address.entity';
-import { UserRole } from '@musat/core';
+import { isAuthorized, UserRole } from '@musat/core';
 import { DataSource, ILike } from 'typeorm';
 import {
   generateHexToken,
@@ -23,6 +23,7 @@ import { AccountVerificationError } from './errors/account-verification.error';
 import { UserInternalUpdateDto } from './dtos/user-internal-update.dto';
 import { UserQueryDto } from './dtos/user-query.dto';
 import { Paginated } from '@/shared/pagination';
+import { CannotUpdateOwnRoleError } from './errors/cannot-update-own-role.error';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 
@@ -241,11 +242,24 @@ export class UserService {
     });
   }
 
-  async internalUpdate(
+  async updateByAdmin(
+    admin: User,
     userId: User['id'],
     updates: UserInternalUpdateDto,
   ): Promise<User> {
     this.logger.log(`Internally updating user ${userId}`);
+
+    // Ensure the admin has the right role
+    if (!isAuthorized(admin, UserRole.ADMIN)) {
+      throw new UnauthorizedException();
+    }
+
+    // Prevent admins from updating their own role
+    // This is both a security measure and a UX consideration
+    if (admin.id === userId) {
+      this.logger.warn(`Admin ${admin.id} cannot update its own role`);
+      throw new CannotUpdateOwnRoleError();
+    }
 
     const user = await User.findOneOrFail({
       where: {

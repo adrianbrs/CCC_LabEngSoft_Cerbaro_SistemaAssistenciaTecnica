@@ -85,11 +85,12 @@ export class UserController {
    */
   @Patch(':id')
   @Authorize(UserRole.ADMIN)
-  updateOne(
+  updateByAdmin(
+    @LoggedUser() admin: User,
     @Param('id', ParseUUIDPipe) userId: string,
     @Body() updateDto: UserInternalUpdateDto,
   ) {
-    return this.userService.internalUpdate(userId, updateDto);
+    return this.userService.updateByAdmin(admin, userId, updateDto);
   }
 
   @Get(':id')
