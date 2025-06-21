@@ -1,28 +1,8 @@
-<script lang="ts">
-import type { BadgeProps, DropdownMenuItem } from "@nuxt/ui";
-import { UserRole } from "@musat/core";
-
-interface RoleOptions {
-  color: BadgeProps["color"];
-  label: string;
-}
-
-const roleOptions: Partial<Record<UserRole, RoleOptions>> = {
-  [UserRole.TECHNICIAN]: {
-    color: "info",
-    label: "Técnico",
-  },
-  [UserRole.ADMIN]: {
-    color: "error",
-    label: "Admin",
-  },
-};
-</script>
-
 <script setup lang="ts">
+import { UserRole } from "@musat/core";
+import type { DropdownMenuItem } from "@nuxt/ui";
 const { user } = useUserSession(true);
 const isDesktop = useMediaQuery("(width >= 48rem)");
-const options = computed(() => roleOptions[user.value.role]);
 
 const items = computed<DropdownMenuItem[][]>(() => [
   [
@@ -60,14 +40,11 @@ const items = computed<DropdownMenuItem[][]>(() => [
         <div class="flex gap-1">
           <p class="text-md truncate">{{ user.name }}</p>
 
-          <UBadge
-            v-if="options"
+          <UserRoleBadge
+            v-if="user.role !== UserRole.CLIENT"
+            :role="user.role"
             size="sm"
-            variant="soft"
-            :color="options.color"
-            class="rounded-full"
-            >{{ options.label }}</UBadge
-          >
+          />
         </div>
         <p class="text-xs text-dimmed">{{ user.email }}</p>
       </div>
@@ -81,14 +58,11 @@ const items = computed<DropdownMenuItem[][]>(() => [
           <div class="flex gap-1">
             <p class="text-md truncate">{{ user.name }}</p>
 
-            <UBadge
-              v-if="options"
+            <UserRoleBadge
+              v-if="user.role !== UserRole.CLIENT"
+              :role="user.role"
               size="sm"
-              variant="soft"
-              :color="options.color"
-              class="rounded-full"
-              >{{ options.label }}</UBadge
-            >
+            />
           </div>
           <p class="text-xs text-dimmed">{{ user.email }}</p>
         </div>

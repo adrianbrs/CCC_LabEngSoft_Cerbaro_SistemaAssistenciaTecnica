@@ -1,5 +1,4 @@
 <script setup lang="tsx">
-import { UButton } from "#components";
 import {
   type IPaginatedEntity,
   UserRole,
@@ -23,7 +22,7 @@ const { action, setAction, clearAction } = useCrudActions<IProductEntity>();
 const columns: TableColumn<IProductEntity>[] = [
   {
     accessorKey: "model",
-    header: "Nome",
+    header: "Modelo",
   },
   {
     accessorFn: (row) => row.category?.name,

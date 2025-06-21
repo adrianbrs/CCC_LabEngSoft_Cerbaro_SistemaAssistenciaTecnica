@@ -29,7 +29,7 @@ const items = computed<NavigationMenuItem[][]>(() => [
   ],
   [
     {
-      label: "Administração",
+      label: "Gestão",
       type: "label",
     },
     {
@@ -46,6 +46,17 @@ const items = computed<NavigationMenuItem[][]>(() => [
       label: "Produtos",
       icon: "i-lucide-box",
       to: "/products",
+    },
+  ],
+  [
+    {
+      label: "Administração",
+      type: "label",
+    },
+    {
+      label: "Usuários",
+      icon: "i-lucide-users",
+      to: "/users",
     },
   ],
 ]);

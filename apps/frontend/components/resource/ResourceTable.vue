@@ -9,16 +9,20 @@ import type { Table } from "@tanstack/vue-table";
 
 const {
   context: contextProp = undefined,
-  onEdit = undefined,
-  onDelete = undefined,
-  actions = undefined,
   columns = undefined,
   role = UserRole.ADMIN,
+  getRowActions: _getRowActions = undefined,
+  canEdit = undefined,
+  canDelete = undefined,
+  onEdit = undefined,
+  onDelete = undefined,
 } = defineProps<{
   context?: TContext;
-  actions?: (DropdownMenuItem | DropdownMenuItem[])[];
   role?: UserRole;
   columns?: TableColumn<TEntity>[];
+  canEdit?: (item: TEntity) => boolean;
+  canDelete?: (item: TEntity) => boolean;
+  getRowActions?: (item: TEntity) => (DropdownMenuItem | DropdownMenuItem[])[];
   onEdit?: (item: TEntity) => void;
   onDelete?: (item: TEntity) => void;
 }>();
@@ -70,7 +74,7 @@ const getRowActions = (item: TEntity) => {
   if (hasRole(role)) {
     const managementActions: DropdownMenuItem[] = [];
 
-    if (onEdit) {
+    if (onEdit && (!canEdit || canEdit(item))) {
       managementActions.push({
         label: "Editar",
         class: "cursor-pointer",
@@ -81,7 +85,7 @@ const getRowActions = (item: TEntity) => {
       });
     }
 
-    if (onDelete) {
+    if (onDelete && (!canDelete || canDelete(item))) {
       managementActions.push({
         label: "Excluir",
         color: "error",
@@ -96,7 +100,8 @@ const getRowActions = (item: TEntity) => {
     items.push(managementActions);
   }
 
-  if (actions?.length) {
+  if (typeof _getRowActions === "function") {
+    const actions = _getRowActions(item);
     let group = 0;
     actions.forEach((action) => {
       if (Array.isArray(action)) {
