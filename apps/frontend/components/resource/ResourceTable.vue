@@ -4,7 +4,7 @@
   generic="TEntity extends ICoreEntity, TContext extends UseApiQueryReturn<IPaginatedEntity<TEntity>>"
 >
 import { UserRole, type ICoreEntity, type IPaginatedEntity } from "@musat/core";
-import type { DropdownMenuItem, TableColumn } from "@nuxt/ui";
+import type { DropdownMenuItem, TableColumn, TableRow } from "@nuxt/ui";
 import type { Table } from "@tanstack/vue-table";
 
 const {
@@ -12,6 +12,7 @@ const {
   columns = undefined,
   role = UserRole.ADMIN,
   getRowActions: _getRowActions = undefined,
+  onSelect = undefined,
   canEdit = undefined,
   canDelete = undefined,
   onEdit = undefined,
@@ -23,6 +24,7 @@ const {
   canEdit?: (item: TEntity) => boolean;
   canDelete?: (item: TEntity) => boolean;
   getRowActions?: (item: TEntity) => (DropdownMenuItem | DropdownMenuItem[])[];
+  onSelect?: (item: TEntity, row: TableRow<TEntity>) => void;
   onEdit?: (item: TEntity) => void;
   onDelete?: (item: TEntity) => void;
 }>();
@@ -35,7 +37,7 @@ const table = useTemplateRef<{
 }>("table");
 const slots = useSlots();
 const context = useApiQueryCtx<TContext>(contextProp);
-const { data, status, error, refresh } = context;
+const { data, status, error, query, refresh } = context;
 
 const computedColumns = computed<TableColumn<TEntity>[]>(() => [
   ...(columns ?? []),
@@ -138,7 +140,17 @@ const slottedColumns = computed(() => {
     }"
     :columns="computedColumns"
     :loading="status === 'pending'"
+    :ui="{
+      tr: onSelect ? 'cursor-pointer' : undefined,
+    }"
     sticky
+    v-bind="{
+      ...(onSelect && {
+        onSelect: (row: TableRow<TEntity>) => {
+          onSelect!(row.original, row)
+        }
+      })
+    }"
   >
     <template
       v-for="col in slottedColumns"
@@ -149,15 +161,12 @@ const slottedColumns = computed(() => {
     </template>
 
     <template #empty>
-      <div v-if="error" class="text-left px-6">
+      <div v-if="error" class="p-6">
         <slot name="error" :status="status" :refresh="refresh" :error="error">
-          <UAlert
-            title="Oops!"
+          <EmptyState
+            title="Oops! Algo deu errado"
             description="Não foi possível carregar, tente novamente mais tarde."
             icon="i-lucide-alert-triangle"
-            variant="subtle"
-            color="error"
-            orientation="vertical"
             :actions="[
               {
                 label: 'Tentar novamente',
@@ -175,15 +184,51 @@ const slottedColumns = computed(() => {
       </div>
       <div v-else class="px-6 flex flex-col items-center justify-center gap-4">
         <slot name="empty" :status="status">
-          <UIcon name="i-system-uicons-box-open" size="54" />
-          <p class="text-lg">Não encontramos nada</p>
+          <EmptyState
+            v-if="query.isDirty"
+            icon="i-fluent-box-search-24-regular"
+            title="Não encontramos nada"
+            description="Tente limpar os filtros ou redefinir a pesquisa."
+            :actions="[
+              {
+                label: 'Limpar filtros',
+                icon: 'i-lucide-filter-x',
+                variant: 'outline',
+                size: 'md',
+                color: 'neutral',
+                class: 'cursor-pointer',
+                onClick: () => query.reset(),
+              },
+            ]"
+          />
+
+          <EmptyState
+            v-else
+            icon="i-system-uicons-box-open"
+            title="Não há nada por aqui"
+            description="Parece que não há nada para mostrar no momento."
+            :actions="[
+              {
+                label: 'Tentar novamente',
+                icon: 'i-lucide-refresh-ccw',
+                variant: 'outline',
+                size: 'md',
+                color: 'neutral',
+                class: 'cursor-pointer',
+                loading: status === 'pending',
+                onClick: () => refresh(),
+              },
+            ]"
+          />
         </slot>
       </div>
     </template>
 
     <template #actions-cell="ctx">
       <slot name="actions" v-bind="ctx">
-        <div class="text-right">
+        <div class="flex items-center gap-2">
+          <slot name="actions-leading" v-bind="ctx" />
+
           <UDropdownMenu
             :content="{
               align: 'end',
@@ -199,6 +244,8 @@ const slottedColumns = computed(() => {
               aria-label="Ações"
             />
           </UDropdownMenu>
+
+          <slot name="actions-trailing" v-bind="ctx" />
         </div>
       </slot>
     </template>

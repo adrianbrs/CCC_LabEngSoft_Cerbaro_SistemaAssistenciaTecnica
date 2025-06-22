@@ -1,5 +1,13 @@
 <script setup lang="ts">
 const navOpen = ref(false);
+
+useBreadcrumbs([
+  {
+    label: "Início",
+    icon: "i-lucide-home",
+    to: "/",
+  },
+]);
 </script>
 
 <template>

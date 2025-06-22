@@ -40,16 +40,18 @@ const columns: TableColumn<IProductEntity>[] = [
 <template>
   <LayoutPage title="Produtos" description="Gestão de produtos">
     <LayoutPageHeaderActions>
-      <UButton
-        color="primary"
-        variant="soft"
-        icon="i-lucide-plus"
-        class="cursor-pointer"
-        aria-label="Cadastrar produto"
-        @click="setAction('create')"
-      >
-        Produto
-      </UButton>
+      <AccountRestrict :role="UserRole.ADMIN">
+        <UButton
+          color="primary"
+          variant="soft"
+          icon="i-lucide-plus"
+          class="cursor-pointer"
+          aria-label="Cadastrar produto"
+          @click="setAction('create')"
+        >
+          Produto
+        </UButton>
+      </AccountRestrict>
     </LayoutPageHeaderActions>
 
     <ResourceList>

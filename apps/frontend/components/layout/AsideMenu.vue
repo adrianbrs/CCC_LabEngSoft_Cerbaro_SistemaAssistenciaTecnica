@@ -26,6 +26,12 @@ const items = computed<NavigationMenuItem[][]>(() => [
       label: "Início",
       icon: "i-lucide-home",
     },
+    {
+      to: "/my-tickets",
+      label: "Minhas Assistências",
+      icon: "i-lucide-clipboard-list",
+      exact: false,
+    },
   ],
   [
     {

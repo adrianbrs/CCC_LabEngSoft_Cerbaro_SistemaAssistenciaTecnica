@@ -69,12 +69,23 @@ export function useApiQuery<
 
 export function useApiQueryCtx<
   TContext extends UseApiQueryReturn = UseApiQueryReturn
->(override?: TContext) {
-  const ctx = override ?? inject(API_QUERY_CTX);
-  if (!ctx) {
+>(required: false): TContext | undefined;
+export function useApiQueryCtx<
+  TContext extends UseApiQueryReturn = UseApiQueryReturn
+>(required: true): TContext;
+export function useApiQueryCtx<
+  TContext extends UseApiQueryReturn = UseApiQueryReturn
+>(override?: TContext): TContext;
+export function useApiQueryCtx(
+  overrideOrRequired?: UseApiQueryReturn | boolean
+) {
+  const ctx =
+    (typeof overrideOrRequired === "boolean" ? null : overrideOrRequired) ??
+    inject(API_QUERY_CTX);
+  if (!ctx && overrideOrRequired !== false) {
     throw new Error(
       "useApiQueryCtx must be used within a useApiQuery context or provide it explicitly."
     );
   }
-  return ctx as TContext;
+  return ctx;
 }

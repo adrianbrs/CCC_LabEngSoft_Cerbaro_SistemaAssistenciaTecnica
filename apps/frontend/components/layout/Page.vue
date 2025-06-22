@@ -2,6 +2,10 @@
 const props = defineProps<{
   title?: string;
   description?: string;
+  ui?: {
+    header?: unknown;
+    body?: unknown;
+  };
 }>();
 
 useHead({
@@ -20,23 +24,40 @@ useHead({
 </script>
 
 <template>
-  <section>
-    <slot name="header">
-      <LayoutPageHeader
-        v-if="title"
-        :title="title"
-        :description="description"
-      />
-    </slot>
+  <slot name="header">
+    <LayoutPageHeader
+      v-if="
+        title ||
+        description ||
+        $slots.title ||
+        $slots.description ||
+        $slots['header-actions']
+      "
+      :title="title"
+      :description="description"
+      :class="props.ui?.header"
+    >
+      <template v-if="$slots.title" #title>
+        <slot name="title" />
+      </template>
 
-    <slot name="content">
-      <LayoutBreadcrumbs />
+      <template v-if="$slots.description" #description>
+        <slot name="description" />
+      </template>
 
-      <div class="p-4 sm:p-6 lg:p-8">
-        <slot />
-      </div>
-    </slot>
+      <template #actions>
+        <slot name="header-actions" />
+      </template>
+    </LayoutPageHeader>
+  </slot>
 
-    <slot name="footer" />
-  </section>
+  <slot name="content">
+    <LayoutBreadcrumbs />
+
+    <div :class="['p-4', props.ui?.body]">
+      <slot />
+    </div>
+  </slot>
+
+  <slot name="footer" />
 </template>

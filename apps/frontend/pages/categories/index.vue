@@ -31,16 +31,18 @@ const columns: TableColumn<ICategoryEntity>[] = [
 <template>
   <LayoutPage title="Categorias" description="Gestão de categorias de produtos">
     <LayoutPageHeaderActions>
-      <UButton
-        color="primary"
-        variant="soft"
-        icon="i-lucide-plus"
-        class="cursor-pointer"
-        aria-label="Cadastrar categoria"
-        @click="setAction('create')"
-      >
-        Categoria
-      </UButton>
+      <AccountRestrict :role="UserRole.ADMIN">
+        <UButton
+          color="primary"
+          variant="soft"
+          icon="i-lucide-plus"
+          class="cursor-pointer"
+          aria-label="Cadastrar categoria"
+          @click="setAction('create')"
+        >
+          Categoria
+        </UButton>
+      </AccountRestrict>
     </LayoutPageHeaderActions>
 
     <ResourceList>

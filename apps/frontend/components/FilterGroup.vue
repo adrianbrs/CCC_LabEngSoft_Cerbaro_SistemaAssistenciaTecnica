@@ -243,7 +243,7 @@ const [DefineTrigger, UseTrigger] = createReusableTemplate();
           <div class="flex justify-end mt-4">
             <UButton
               v-if="onReset"
-              color="error"
+              color="neutral"
               variant="soft"
               icon="i-lucide-x"
               class="cursor-pointer"

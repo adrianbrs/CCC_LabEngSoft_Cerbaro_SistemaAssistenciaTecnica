@@ -4,24 +4,9 @@ export const PAGE_HEADER_ACTIONS_ID = "layout-page-header-actions" as const;
 
 <script setup lang="ts">
 defineProps<{
-  title: string;
+  title?: string;
   description?: string;
 }>();
-
-const route = useRoute();
-
-const prevRoute = computed(() => {
-  const parent = route.matched.at(-2);
-  if (parent && parent.path !== route.path) {
-    return parent.path;
-  }
-
-  if (route.path !== "/") {
-    return "/";
-  }
-
-  return null;
-});
 </script>
 
 <template>
@@ -30,18 +15,19 @@ const prevRoute = computed(() => {
   >
     <div class="flex items-center gap-4 border-b border-default h-full">
       <UButton
-        v-if="prevRoute"
+        v-if="$route.path !== '/'"
         variant="link"
         size="md"
         icon="i-lucide-arrow-left"
-        :to="prevRoute"
         aria-label="Voltar"
+        class="cursor-pointer"
+        @click="$router.back()"
       />
 
       <slot>
         <div class="flex flex-col flex-1 min-w-0">
           <slot name="title">
-            <h1 class="text-lg md:text-xl font-semibold truncate">
+            <h1 v-if="title" class="text-lg md:text-xl font-semibold truncate">
               {{ title }}
             </h1>
           </slot>
