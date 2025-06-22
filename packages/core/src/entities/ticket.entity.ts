@@ -1,6 +1,8 @@
 import { ICoreEntity } from "./core.entity";
 import { IUserEntity } from "./user.entity";
 import { IProductEntity } from "./product.entity";
+import { IPaginatedQuery } from "./paginated.entity";
+import { IDateRangeFilter } from "@/types";
 
 export enum TicketStatus {
   OPEN = "open",
@@ -18,5 +20,20 @@ export interface ITicketEntity extends ICoreEntity {
   status: TicketStatus;
   description: string;
   serialNumber: string;
+  ticketNumber: number;
   closedAt?: Date;
 }
+
+export interface ITicketQuery extends IPaginatedQuery {
+  productId?: IProductEntity["id"];
+  serialNumber?: string;
+  status?: TicketStatus;
+  clientId?: IUserEntity["id"];
+  technicianId?: IUserEntity["id"];
+  closedAt?: IDateRangeFilter;
+  createdAt?: IDateRangeFilter;
+  updatedAt?: IDateRangeFilter;
+}
+
+export interface ITicketUserQuery
+  extends Omit<ITicketQuery, "technicianId" | "clientId"> {}

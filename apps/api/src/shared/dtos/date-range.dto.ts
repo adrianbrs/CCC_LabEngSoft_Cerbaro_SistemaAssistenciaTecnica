@@ -1,3 +1,4 @@
+import { IDateRangeFilter } from '@musat/core';
 import { IsDate, ValidateIf } from 'class-validator';
 import {
   Between,
@@ -7,7 +8,7 @@ import {
   MoreThanOrEqual,
 } from 'typeorm';
 
-export class DateRangeDto {
+export class DateRangeDto implements IDateRangeFilter {
   @IsDate()
   @ValidateIf((o: DateRangeDto) => Boolean((!o.at && !o.to) || o.from))
   from?: Date;

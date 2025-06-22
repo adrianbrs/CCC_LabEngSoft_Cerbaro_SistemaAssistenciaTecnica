@@ -15,9 +15,8 @@ import { ReviewService } from '../review/review.service';
 import { TicketQueryDto } from './dtos/ticket-query.dto';
 import { Paginated } from '@/shared/pagination';
 import { TicketUserQueryDto } from './dtos/ticket-user-query.dto';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, ILike } from 'typeorm';
 import { DateRange } from '@/shared/dtos';
-import { TicketTechnicianQueryDto } from './dtos/ticket-technician-query.dto';
 import { NoTechniciansAvailableError } from './errors/no-technicians-available.error';
 
 @Injectable()
@@ -34,7 +33,7 @@ export class TicketService {
   ): FindOptionsWhere<Ticket> {
     return {
       ...(filters?.serialNumber && {
-        serialNumber: filters.serialNumber,
+        serialNumber: ILike(`%${filters.serialNumber}%`),
       }),
       ...(filters?.status && {
         status: filters.status,
@@ -238,35 +237,6 @@ export class TicketService {
 
     this.logger.log(
       `Found ${result.totalItems} tickets for user ${user.id}`,
-      filters,
-    );
-
-    return result;
-  }
-
-  async getForTechnician(
-    technician: User,
-    filters?: TicketTechnicianQueryDto,
-  ): Promise<Paginated<Ticket>> {
-    this.logger.log(
-      `Fetching tickets assigned to technician ${technician.id}`,
-      filters,
-    );
-
-    const result = await Ticket.findPaginated(
-      {
-        where: {
-          ...this.getWhereOptions(filters),
-          technician: {
-            id: technician.id,
-          },
-        },
-      },
-      filters,
-    );
-
-    this.logger.log(
-      `Found ${result.totalItems} tickets assigned to technician ${technician.id}`,
       filters,
     );
 

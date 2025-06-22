@@ -1,4 +1,4 @@
-import { TicketStatus } from '@musat/core';
+import { ITicketQuery, TicketStatus } from '@musat/core';
 import {
   IsEnum,
   IsOptional,
@@ -13,7 +13,7 @@ import { Type } from 'class-transformer';
 import { Product } from '@/modules/product/models/product.entity';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class TicketQueryDto extends PaginatedQueryDto {
+export class TicketQueryDto extends PaginatedQueryDto implements ITicketQuery {
   @IsUUID('4')
   @IsOptional()
   productId?: Product['id'];

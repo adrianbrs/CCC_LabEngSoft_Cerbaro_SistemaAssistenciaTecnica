@@ -18,7 +18,6 @@ import { UserRole } from '@musat/core';
 import { TicketQueryDto } from './dtos/ticket-query.dto';
 import { ApiNestedQuery } from '@/shared/decorators';
 import { TicketUserQueryDto } from './dtos/ticket-user-query.dto';
-import { TicketTechnicianQueryDto } from './dtos/ticket-technician-query.dto';
 
 @Controller('tickets')
 export class TicketController {
@@ -28,7 +27,7 @@ export class TicketController {
    * Returns all tickets
    */
   @Get()
-  @Authorize(UserRole.ADMIN)
+  @Authorize(UserRole.TECHNICIAN)
   @ApiNestedQuery(TicketQueryDto)
   async getAll(@Query() query: TicketQueryDto) {
     return this.ticketService.getAll(query);
@@ -44,19 +43,6 @@ export class TicketController {
     @Query() query: TicketUserQueryDto,
   ) {
     return this.ticketService.getFromUser(user, query);
-  }
-
-  /**
-   * Returns all the tickets assigned to the logged technician
-   */
-  @Get('technician')
-  @Authorize(UserRole.TECHNICIAN)
-  @ApiNestedQuery(TicketTechnicianQueryDto)
-  async getForTechnician(
-    @LoggedUser() user: User,
-    @Query() query: TicketTechnicianQueryDto,
-  ) {
-    return this.ticketService.getForTechnician(user, query);
   }
 
   @Post()
