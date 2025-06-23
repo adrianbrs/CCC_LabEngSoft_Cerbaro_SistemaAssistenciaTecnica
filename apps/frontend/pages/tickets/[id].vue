@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import type { ITicketEntity } from "@musat/core";
+import TicketUpdateFormModal from "~/components/ticket/TicketUpdateFormModal.vue";
 
 const route = useRoute();
 
-const { data: ticket } = await useApiQuery<ITicketEntity>(
+const { data: ticket, refresh } = await useApiQuery<ITicketEntity>(
   () => uri`/tickets/${(route.params.id as string | undefined) ?? ""}`
 );
+const { action, setAction, clearAction } = useCrudActions<ITicketEntity>();
 
 useBreadcrumbs(() =>
   ticket.value
@@ -58,10 +60,26 @@ const [DefineTicketStatus, UseTicketStatus] = createReusableTemplate();
 
       <template #header-actions>
         <UseTicketStatus v-if="isDesktop" />
+
+        <UButton
+          icon="i-lucide-edit"
+          variant="link"
+          class="cursor-pointer"
+          @click="setAction('update', { resource: ticket })"
+        >
+          Alterar
+        </UButton>
       </template>
 
       <UseTicketStatus v-if="!isDesktop" class="w-full" />
       <TicketHeader :ticket="ticket" />
+
+      <TicketUpdateFormModal
+        :open="action?.type === 'update'"
+        :ticket="ticket"
+        @update:open="!$event && clearAction()"
+        @success="refresh()"
+      />
     </LayoutPage>
   </LayoutLoader>
 </template>

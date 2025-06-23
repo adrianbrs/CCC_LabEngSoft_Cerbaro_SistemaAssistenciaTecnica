@@ -37,13 +37,7 @@ const options = computed(() => roleOptions[role]);
 </script>
 
 <template>
-  <UBadge
-    v-if="options"
-    :size="size"
-    variant="soft"
-    :color="options.color"
-    class="rounded-full"
-  >
+  <UBadge v-if="options" :size="size" variant="soft" :color="options.color">
     {{ options.label }}
   </UBadge>
 </template>

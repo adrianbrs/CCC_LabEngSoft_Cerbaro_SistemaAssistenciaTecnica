@@ -29,8 +29,8 @@ export class TicketController {
   @Get()
   @Authorize(UserRole.TECHNICIAN)
   @ApiNestedQuery(TicketQueryDto)
-  async getAll(@Query() query: TicketQueryDto) {
-    return this.ticketService.getAll(query);
+  async getAll(@LoggedUser() user: User, @Query() query: TicketQueryDto) {
+    return this.ticketService.getAll(user, query);
   }
 
   /**

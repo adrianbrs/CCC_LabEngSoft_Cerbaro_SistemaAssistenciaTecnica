@@ -1,3 +1,4 @@
+import { TicketStatus } from "@musat/core";
 import { z } from "zod";
 
 export const TicketCreateSchema = z
@@ -21,3 +22,13 @@ export const TicketCreateSchema = z
   .strip();
 
 export type TicketCreateFormData = z.output<typeof TicketCreateSchema>;
+
+export const TicketUpdateSchema = z
+  .object({
+    status: z.nativeEnum(TicketStatus, {
+      message: "Selecione um status válido",
+    }),
+  })
+  .strip();
+
+export type TicketUpdateFormData = z.output<typeof TicketUpdateSchema>;

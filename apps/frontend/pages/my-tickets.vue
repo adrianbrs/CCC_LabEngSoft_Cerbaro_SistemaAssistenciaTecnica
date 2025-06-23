@@ -1,7 +1,7 @@
 <script setup lang="ts">
 useBreadcrumbs([
   {
-    label: "Minhas Assistências",
+    label: "Minhas solicitações",
     to: "/my-tickets",
   },
 ]);

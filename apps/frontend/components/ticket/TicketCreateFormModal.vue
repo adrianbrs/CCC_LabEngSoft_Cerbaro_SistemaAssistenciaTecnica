@@ -83,7 +83,7 @@ const onCancel = () => {
   >
     <template #body>
       <UForm
-        id="ticket-form"
+        id="ticket-create-form"
         ref="form"
         :state="state"
         :schema="TicketCreateSchema"
@@ -191,7 +191,7 @@ const onCancel = () => {
         class="cursor-pointer"
         :loading="loading"
         type="submit"
-        form="ticket-form"
+        form="ticket-create-form"
       >
         Solicitar assistência
       </UButton>

@@ -11,10 +11,6 @@ const statusOptions: Partial<Record<TicketStatus, StatusOptions>> = {
     color: "primary",
     label: "Aberto",
   },
-  [TicketStatus.ACCEPTED]: {
-    color: "info",
-    label: "Aguardando técnico",
-  },
   [TicketStatus.IN_PROGRESS]: {
     color: "primary",
     label: "Em andamento",
@@ -62,7 +58,6 @@ const options = computed(() => {
 <template>
   <UBadge
     variant="outline"
-    class="rounded-full"
     v-bind="options.props"
     :size="size"
     :ui="{

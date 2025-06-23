@@ -4,6 +4,7 @@ defineProps<{
   value?: string;
   icon?: string;
   ui?: {
+    root?: string;
     icon?: string;
     content?: string;
     label?: string;
@@ -13,7 +14,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex items-center gap-2 min-w-0">
+  <div :class="['flex items-center gap-2 min-w-0', ui?.root]">
     <slot name="icon">
       <UIcon
         v-if="icon"

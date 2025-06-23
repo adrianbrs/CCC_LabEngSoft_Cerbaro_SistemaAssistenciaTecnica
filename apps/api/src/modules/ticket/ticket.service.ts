@@ -58,6 +58,16 @@ export class TicketService {
       ...(filters?.status && {
         status: filters.status,
       }),
+      ...(filters?.clientId && {
+        client: {
+          id: filters.clientId,
+        },
+      }),
+      ...(filters?.technicianId && {
+        technician: {
+          id: filters.technicianId,
+        },
+      }),
       ...(filters?.closedAt && {
         closedAt: DateRange(filters.closedAt),
       }),
@@ -70,12 +80,20 @@ export class TicketService {
     };
   }
 
-  async getAll(query?: TicketQueryDto): Promise<Paginated<Ticket>> {
-    this.logger.log('Fetching all tickets', query);
+  async getAll(user: User, query?: TicketQueryDto): Promise<Paginated<Ticket>> {
+    this.logger.log(`Fetching all tickets for user ${user.id}`, query);
 
     const result = await Ticket.findPaginated(
       {
-        where: this.getWhereOptions(query),
+        where: {
+          ...this.getWhereOptions(query),
+          // If user is not an admin, restrict access to their own assigned tickets
+          ...(!isAuthorized(user, UserRole.ADMIN) && {
+            technician: {
+              id: user.id,
+            },
+          }),
+        },
         order: {
           createdAt: 'DESC',
         },

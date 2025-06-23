@@ -6,7 +6,6 @@ import { IDateRangeFilter } from "@/types";
 
 export enum TicketStatus {
   OPEN = "open",
-  ACCEPTED = "accepted",
   IN_PROGRESS = "in_progress",
   AWAITING_CLIENT = "awaiting_client",
   CANCELLED = "cancelled",

@@ -59,10 +59,13 @@ export interface UseCrudActionsReturn<
   >
 > {
   action: Ref<CrudAction<TActions> | null>;
-  setAction: <TActionType extends CrudActionType<TActions>>(
+
+  setAction<TActionType extends CrudActionType<TActions>>(
     ...args: SetActionArgs<TActions, TActionType>
-  ) => void;
-  clearAction: () => void;
+  ): void;
+  setAction(type: string, options?: Record<string, unknown>): void;
+
+  clearAction(): void;
 }
 
 export function useCrudActions<
@@ -75,14 +78,8 @@ export function useCrudActions<
 >(): UseCrudActionsReturn<TEntity, TActionRecord, TActions> {
   const action = ref(null) as Ref<CrudAction<TActions> | null>;
 
-  const setAction = <TActionType extends CrudActionType<TActions>>(
-    ...args: SetActionArgs<TActions, TActionType>
-  ) => {
-    const [type, options] = args;
-    action.value = { type, ...(options || {}) } as CrudAction<
-      TActions,
-      TActionType
-    >;
+  const setAction = (type: string, options?: Record<string, unknown>) => {
+    action.value = { type, ...(options || {}) } as CrudAction<TActions>;
   };
 
   const clearAction = () => {

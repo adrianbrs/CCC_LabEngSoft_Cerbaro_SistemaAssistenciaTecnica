@@ -2,31 +2,35 @@
 import type { ITicketEntity } from "@musat/core";
 import type { AccordionItem } from "@nuxt/ui";
 
-defineProps<{
+type TicketHeaderSlot = (typeof items)["value"][number]["slot"];
+
+const { ticket } = defineProps<{
   ticket: ITicketEntity;
 }>();
+const expandedModel = defineModel<TicketHeaderSlot>("expanded");
 
-const expandedModel = defineModel<"description" | "product">("expanded");
-
-const items = [
-  {
-    label: "Descrição",
-    icon: "i-pajamas-text-description",
-    slot: "description" as const,
-  },
-  {
-    label: "Detalhes do produto",
-    icon: "i-lucide-box",
-    slot: "product" as const,
-  },
-] satisfies AccordionItem[];
+const items = computed(
+  () =>
+    [
+      {
+        label: "Detalhes da solicitação",
+        icon: "i-lucide-file-text",
+        slot: "details" as const,
+      },
+      {
+        label: "Detalhes do produto",
+        icon: "i-lucide-box",
+        slot: "product" as const,
+      },
+    ] satisfies AccordionItem[]
+);
 
 const active = computed<string>({
   get() {
     if (!expandedModel.value) {
       return "";
     }
-    return items
+    return items.value
       .findIndex((item) => item.slot === expandedModel.value)
       .toString();
   },
@@ -36,7 +40,7 @@ const active = computed<string>({
       return;
     }
     const index = Number(value);
-    expandedModel.value = items[index]?.slot;
+    expandedModel.value = items.value[index]?.slot;
   },
 });
 </script>
@@ -52,6 +56,40 @@ const active = computed<string>({
       content: 'border-t border-default',
     }"
   >
+    <template #details-body>
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-flow-col sm:auto-cols-fr gap-4">
+          <LabeledValue
+            label="Cliente"
+            :value="ticket.client.name"
+            icon="i-mdi-account-outline"
+          />
+          <LabeledValue
+            label="Técnico"
+            :value="ticket.technician.name"
+            icon="i-mdi-account-cog-outline"
+          />
+        </div>
+
+        <USeparator />
+
+        <LabeledValue
+          class="w-full"
+          label="Descrição"
+          icon="i-pajamas-text-description"
+          :ui="{
+            root: 'items-start',
+            icon: 'size-6',
+          }"
+        >
+          <template #value>
+            <p class="text-muted whitespace-pre-line">
+              {{ ticket.description }}
+            </p>
+          </template>
+        </LabeledValue>
+      </div>
+    </template>
     <template #product-body>
       <div class="grid grid-cols-1 sm:grid-flow-col sm:auto-cols-fr gap-4">
         <LabeledValue
@@ -78,9 +116,6 @@ const active = computed<string>({
           icon="i-lucide-barcode"
         />
       </div>
-    </template>
-    <template #description-body>
-      <p class="whitespace-pre-line">{{ ticket.description }}</p>
     </template>
   </UAccordion>
 </template>
