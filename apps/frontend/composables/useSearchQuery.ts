@@ -31,7 +31,7 @@ export interface UseSearchQueryOptions<T extends SearchQuery = SearchQuery> {
   modifiers?: SearchQueryModifiers<T>;
 }
 
-export interface UseSearchQueryReturn<T extends SearchQuery> {
+export interface UseSearchQueryReturn<T extends SearchQuery = SearchQuery> {
   /**
    * The initial query object that was passed to the composable.
    */

@@ -1,6 +1,19 @@
 import type { UseFetchOptions } from "nuxt/app";
 import type { InjectionKey } from "vue";
 
+type ApiAsyncData<
+  T extends ReturnType<typeof useFetch>,
+  TQuery extends SearchQuery
+> = T extends Promise<infer R>
+  ? R & {
+      query: UseSearchQueryReturn<TQuery>;
+    } & Promise<
+        R & {
+          query: UseSearchQueryReturn<TQuery>;
+        }
+      >
+  : never;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type UseApiQuery = Record<string, any>;
 
@@ -57,10 +70,20 @@ export function useApiQuery<
     $fetch: api,
   });
 
-  const ctx = {
-    ...fetchReturn,
-    query,
-  };
+  const ctx = fetchReturn as ApiAsyncData<typeof fetchReturn, TQuery>;
+
+  // Add the query to the non-promise result
+  ctx.query = query;
+
+  const then = ctx.then.bind(ctx);
+  ctx.then = ((...args: Parameters<typeof then>) =>
+    then()
+      .then((asyncData) => ({
+        ...asyncData,
+        // Add the query to the promise resolved data
+        query,
+      }))
+      .then(...args)).bind(ctx) as typeof then;
 
   provide(API_QUERY_CTX, ctx);
 
