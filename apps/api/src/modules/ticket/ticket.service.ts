@@ -10,7 +10,7 @@ import { TicketCreateDto } from './dtos/ticket-create.dto';
 import { User } from '../user/models/user.entity';
 import { Product } from '../product/models/product.entity';
 import { TicketUpdateDto } from './dtos/ticket-update.dto';
-import { isAuthorized, UserRole } from '@musat/core';
+import { isAuthorized, TicketStatus, UserRole } from '@musat/core';
 import { ReviewService } from '../review/review.service';
 import { TicketQueryDto } from './dtos/ticket-query.dto';
 import { Paginated } from '@/shared/pagination';
@@ -232,6 +232,17 @@ export class TicketService {
       !isAuthorized(user, UserRole.ADMIN)
     ) {
       throw new UnauthorizedException();
+    }
+
+    if (updates.status !== ticket.status) {
+      // If the status is being changed, we need to handle the closedAt field
+      if (
+        [TicketStatus.RESOLVED, TicketStatus.CANCELLED].includes(updates.status)
+      ) {
+        ticket.closedAt = new Date();
+      } else {
+        ticket.closedAt = null;
+      }
     }
 
     Ticket.merge(ticket, { ...updates });

@@ -17,11 +17,6 @@ useBreadcrumbs(() =>
     : []
 );
 
-const createdAt = useDateFormat(
-  () => ticket.value?.createdAt,
-  "DD/MM/YYYY HH:mm"
-);
-
 const isDesktop = useMediaQuery("(width >= 48rem)");
 const [DefineTicketStatus, UseTicketStatus] = createReusableTemplate();
 </script>
@@ -39,7 +34,7 @@ const [DefineTicketStatus, UseTicketStatus] = createReusableTemplate();
 
     <LayoutPage
       v-if="ticket"
-      :description="`Aberto em ${createdAt}`"
+      :description="`Aberto em ${$dfns.formatDateTime(ticket.createdAt)}`"
       :ui="{ body: 'space-y-4' }"
     >
       <template #title>

@@ -24,11 +24,11 @@ const props = withDefaults(
 
 const ctx = useApiQueryCtx(false);
 
-const loading = computed(
-  () => props.loading ?? ctx?.status.value === "pending"
-);
 const error = computed(() => props.error ?? ctx?.error.value);
 const empty = computed(() => props.empty ?? (ctx?.data.value ?? null) === null);
+const loading = computed(
+  () => props.loading ?? (ctx?.pending.value && empty.value)
+);
 const hasFilters = computed(() => props.hasFilters ?? ctx?.query.isDirty.value);
 const resetFilters = computed(() => props.onResetFilters ?? ctx?.query.reset);
 const refresh = computed(() => props.onRefresh ?? ctx?.refresh);

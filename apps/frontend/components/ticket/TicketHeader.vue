@@ -58,7 +58,9 @@ const active = computed<string>({
   >
     <template #details-body>
       <div class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-flow-col sm:auto-cols-fr gap-4">
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-flow-col md:auto-cols-fr gap-4"
+        >
           <LabeledValue
             label="Cliente"
             :value="ticket.client.name"
@@ -68,6 +70,24 @@ const active = computed<string>({
             label="Técnico"
             :value="ticket.technician.name"
             icon="i-mdi-account-cog-outline"
+          />
+          <LabeledValue
+            label="Atualizado em"
+            :value="$dfns.formatDateTime(ticket.updatedAt)"
+            icon="i-lucide-calendar-clock"
+            :ui="{
+              icon: 'size-6',
+            }"
+          />
+          <LabeledValue
+            label="Fechado em"
+            :value="
+              ticket.closedAt ? $dfns.formatDateTime(ticket.closedAt) : '--'
+            "
+            icon="i-lucide-calendar-clock"
+            :ui="{
+              icon: 'size-6',
+            }"
           />
         </div>
 

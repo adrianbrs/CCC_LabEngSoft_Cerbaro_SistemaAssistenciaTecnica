@@ -17,6 +17,7 @@ const { query, refresh } = useApiQuery<
   ITicketQuery
 >("/tickets/user");
 const { action, setAction, clearAction } = useCrudActions();
+const dfns = useDateFns();
 
 const columns: TableColumn<ITicketEntity>[] = [
   {
@@ -49,6 +50,11 @@ const columns: TableColumn<ITicketEntity>[] = [
   {
     accessorFn: (row) => row.technician.name,
     header: "Técnico",
+  },
+  {
+    accessorFn: (row) =>
+      row.closedAt ? dfns.formatDateTime(row.closedAt) : "--",
+    header: "Fechado em",
   },
 ];
 

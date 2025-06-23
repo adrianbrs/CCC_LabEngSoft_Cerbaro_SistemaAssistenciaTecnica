@@ -38,15 +38,16 @@ const table = useTemplateRef<{
 const slots = useSlots();
 const context = useApiQueryCtx<TContext>(contextProp);
 const { data, status, error, query, refresh } = context;
+const dfns = useDateFns();
 
 const computedColumns = computed<TableColumn<TEntity>[]>(() => [
   ...(columns ?? []),
   {
-    accessorKey: "createdAt",
+    accessorFn: (row) => dfns.formatDateTime(row.createdAt),
     header: "Criado em",
   },
   {
-    accessorKey: "updatedAt",
+    accessorFn: (row) => dfns.formatDateTime(row.updatedAt),
     header: "Atualizado em",
   },
   {

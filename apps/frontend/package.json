@@ -21,6 +21,7 @@
     "@tanstack/vue-table": "^8.21.3",
     "@vueuse/core": "13.1.0",
     "@vueuse/nuxt": "13.1.0",
+    "date-fns": "^4.1.0",
     "eslint": "^9.0.0",
     "i18next": "^25.1.2",
     "lodash-es": "^4.17.21",

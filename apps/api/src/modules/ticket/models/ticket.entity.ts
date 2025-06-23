@@ -39,7 +39,7 @@ export class Ticket extends CoreEntity implements ITicketEntity {
   client: User;
 
   @Column({ type: 'timestamp', nullable: true })
-  closedAt?: Date | undefined;
+  closedAt?: Date | null;
 
   /**
    * Incremental ticket number to keep track of the latest inserted ticket,

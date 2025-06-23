@@ -20,7 +20,7 @@ export interface ITicketEntity extends ICoreEntity {
   description: string;
   serialNumber: string;
   ticketNumber: number;
-  closedAt?: Date;
+  closedAt?: Date | null;
 }
 
 export interface ITicketQuery extends IPaginatedQuery {
