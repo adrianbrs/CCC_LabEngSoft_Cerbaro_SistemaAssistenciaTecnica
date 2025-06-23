@@ -1,22 +1,24 @@
 <script setup lang="ts">
 import type {
   IPaginatedEntity,
-  ICategoryEntity,
-  ICategoryQuery,
+  IProductEntity,
+  IProductQuery,
 } from "@musat/core";
 
 const props = defineProps<{
   placeholder?: string;
+  categoryId?: string | null;
   brandId?: string | null;
 }>();
 const model = defineModel<string>();
 
 const { data, status, query } = useApiQuery<
-  IPaginatedEntity<ICategoryEntity>,
-  ICategoryQuery
->("/categories", {
+  IPaginatedEntity<IProductEntity>,
+  IProductQuery
+>("/products", {
   lazy: true,
   query: () => ({
+    categoryId: props.categoryId ?? undefined,
     brandId: props.brandId ?? undefined,
   }),
 });
@@ -25,21 +27,21 @@ const { data, status, query } = useApiQuery<
 <template>
   <USelectMenu
     v-model="model"
-    v-model:search-term="query.modelDebounce.name"
+    v-model:search-term="query.modelDebounce.model"
     :items="data?.items"
     :loading="status === 'pending'"
     value-key="id"
-    label-key="name"
+    label-key="model"
     ignore-filter
-    icon="i-lucide-tag"
-    :placeholder="placeholder ?? 'Selecionar categoria'"
+    icon="i-ci-building-01"
+    :placeholder="placeholder ?? 'Selecionar produto'"
     class="w-48"
   >
     <template #trailing>
       <UButton
         v-if="model"
         icon="i-lucide-x"
-        aria-label="Limpar seleção de categoria"
+        aria-label="Limpar seleção de produto"
         color="neutral"
         variant="link"
         class="cursor-pointer"

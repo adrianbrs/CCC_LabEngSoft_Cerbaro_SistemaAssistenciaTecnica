@@ -35,6 +35,14 @@ export class TicketQueryDto extends PaginatedQueryDto implements ITicketQuery {
   technicianId?: User['id'];
 
   @IsOptional()
+  @IsUUID('4')
+  categoryId?: string | undefined;
+
+  @IsOptional()
+  @IsUUID('4')
+  brandId?: string | undefined;
+
+  @IsOptional()
   @ValidateNested()
   @ApiPropertyOptional()
   @Type(() => DateRangeDto)

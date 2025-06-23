@@ -80,7 +80,7 @@ const active = computed<string>({
       </div>
     </template>
     <template #description-body>
-      <p>{{ ticket.description }}</p>
+      <p class="whitespace-pre-line">{{ ticket.description }}</p>
     </template>
   </UAccordion>
 </template>

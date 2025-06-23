@@ -39,7 +39,7 @@ const columns: TableColumn<IProductEntity>[] = [
 
 <template>
   <LayoutPage title="Produtos" description="Gestão de produtos">
-    <LayoutPageHeaderActions>
+    <template #header-actions>
       <AccountRestrict :role="UserRole.ADMIN">
         <UButton
           color="primary"
@@ -52,7 +52,7 @@ const columns: TableColumn<IProductEntity>[] = [
           Produto
         </UButton>
       </AccountRestrict>
-    </LayoutPageHeaderActions>
+    </template>
 
     <ResourceList>
       <template #header>

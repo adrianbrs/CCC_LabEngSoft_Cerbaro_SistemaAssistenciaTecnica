@@ -25,6 +25,8 @@ export interface ITicketEntity extends ICoreEntity {
 }
 
 export interface ITicketQuery extends IPaginatedQuery {
+  categoryId?: string;
+  brandId?: string;
   productId?: IProductEntity["id"];
   serialNumber?: string;
   status?: TicketStatus;

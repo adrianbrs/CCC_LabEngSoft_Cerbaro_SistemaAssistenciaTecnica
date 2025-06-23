@@ -22,6 +22,13 @@ export class CategoryService {
           ...(query?.name && {
             name: ILike(`%${query?.name}%`),
           }),
+          ...(query?.brandId && {
+            products: {
+              brand: {
+                id: query.brandId,
+              },
+            },
+          }),
         },
       },
       query,

@@ -37,7 +37,7 @@ const columns: TableColumn<IBrandEntity>[] = [
 
 <template>
   <LayoutPage title="Marcas" description="Gestão de marcas de produtos">
-    <LayoutPageHeaderActions>
+    <template #header-actions>
       <AccountRestrict :role="UserRole.ADMIN">
         <UButton
           color="primary"
@@ -50,7 +50,7 @@ const columns: TableColumn<IBrandEntity>[] = [
           Marca
         </UButton>
       </AccountRestrict>
-    </LayoutPageHeaderActions>
+    </template>
 
     <ResourceList>
       <template #header>

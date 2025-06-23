@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { UButton } from "#components";
 import type { IPaginatedEntity, IBrandEntity, IBrandQuery } from "@musat/core";
 
 const props = defineProps<{

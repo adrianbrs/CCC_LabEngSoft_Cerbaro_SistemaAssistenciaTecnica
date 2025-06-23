@@ -3,8 +3,8 @@ import { pt_br } from "@nuxt/ui/locale";
 </script>
 
 <template>
-  <NuxtLoadingIndicator />
   <UApp :locale="pt_br">
+    <NuxtLoadingIndicator :throttle="0" />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

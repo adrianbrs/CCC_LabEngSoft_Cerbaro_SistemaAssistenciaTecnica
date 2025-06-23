@@ -1,6 +1,6 @@
 import { PaginatedQueryDto } from '@/shared/pagination';
 import { ICategoryQuery } from '@musat/core';
-import { IsOptional, MaxLength } from 'class-validator';
+import { IsOptional, IsUUID, MaxLength } from 'class-validator';
 
 export class CategoryQueryDto
   extends PaginatedQueryDto
@@ -9,4 +9,8 @@ export class CategoryQueryDto
   @IsOptional()
   @MaxLength(100)
   name?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  brandId?: string | undefined;
 }

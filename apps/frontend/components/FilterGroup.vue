@@ -142,6 +142,7 @@ watch(
 );
 
 const [DefineTrigger, UseTrigger] = createReusableTemplate();
+const isDesktop = useMediaQuery("(width >= 48rem)");
 </script>
 
 <template>
@@ -209,8 +210,12 @@ const [DefineTrigger, UseTrigger] = createReusableTemplate();
       :title="title ?? 'Filtros'"
       :overlay="false"
       :modal="false"
-      :handle="false"
-      :ui="{ header: 'flex items-center justify-between' }"
+      :handle="!isDesktop"
+      :ui="{
+        header: 'flex items-center justify-between',
+        content: isDesktop && 'min-w-sm max-w-xl',
+      }"
+      :direction="isDesktop ? 'right' : 'bottom'"
     >
       <template #header>
         <slot name="drawer-header" v-bind="context">
@@ -236,9 +241,7 @@ const [DefineTrigger, UseTrigger] = createReusableTemplate();
             class="[&>*]:w-full"
           />
         </div>
-      </template>
 
-      <template #footer>
         <slot name="drawer-footer" v-bind="context">
           <div class="flex justify-end mt-4">
             <UButton

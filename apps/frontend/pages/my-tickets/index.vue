@@ -12,9 +12,11 @@ definePageMeta({
 });
 
 const router = useRouter();
-const { query } = useApiQuery<IPaginatedEntity<ITicketEntity>, ITicketQuery>(
-  "/tickets/user"
-);
+const { query, refresh } = useApiQuery<
+  IPaginatedEntity<ITicketEntity>,
+  ITicketQuery
+>("/tickets/user");
+const { action, setAction, clearAction } = useCrudActions();
 
 const columns: TableColumn<ITicketEntity>[] = [
   {
@@ -49,6 +51,11 @@ const columns: TableColumn<ITicketEntity>[] = [
     header: "Técnico",
   },
 ];
+
+const onCreate = (ticket: ITicketEntity) => {
+  refresh();
+  router.push(uri`/my-tickets/${ticket.id}`);
+};
 </script>
 
 <template>
@@ -56,6 +63,19 @@ const columns: TableColumn<ITicketEntity>[] = [
     title="Minhas assistências"
     description="Veja todas as assistências que você solicitou."
   >
+    <template #header-actions>
+      <UButton
+        color="primary"
+        variant="soft"
+        icon="i-lucide-plus"
+        class="cursor-pointer"
+        aria-label="Cadastrar categoria"
+        @click="setAction('create')"
+      >
+        Solicitar assistência
+      </UButton>
+    </template>
+
     <ResourceList>
       <template #header>
         <FilterGroup :dirty="query.isDirty.value" @reset="query.reset()">
@@ -69,6 +89,21 @@ const columns: TableColumn<ITicketEntity>[] = [
             v-model="query.modelDebounce.status"
             placeholder="Filtrar por status"
           />
+
+          <CategorySelectMenu
+            v-model="query.modelDebounce.categoryId"
+            placeholder="Filtrar por categoria"
+          />
+
+          <BrandSelectMenu
+            v-model="query.modelDebounce.brandId"
+            placeholder="Filtrar por marca"
+          />
+
+          <ProductSelectMenu
+            v-model="query.modelDebounce.productId"
+            placeholder="Filtrar por produto"
+          />
         </FilterGroup>
       </template>
 
@@ -78,6 +113,13 @@ const columns: TableColumn<ITicketEntity>[] = [
       />
 
       <ResourcePagination />
+
+      <TicketCreateFormModal
+        v-if="action?.type === 'create'"
+        open
+        @after:leave="clearAction()"
+        @success="onCreate"
+      />
     </ResourceList>
   </LayoutPage>
 </template>

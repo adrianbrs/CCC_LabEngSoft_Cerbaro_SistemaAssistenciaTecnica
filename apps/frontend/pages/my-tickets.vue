@@ -8,5 +8,5 @@ useBreadcrumbs([
 </script>
 
 <template>
-  <RouterView />
+  <NuxtPage />
 </template>

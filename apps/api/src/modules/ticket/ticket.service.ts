@@ -31,17 +31,32 @@ export class TicketService {
   private getWhereOptions(
     filters?: Partial<TicketQueryDto>,
   ): FindOptionsWhere<Ticket> {
+    const productWhere: FindOptionsWhere<Product> = {
+      ...(filters?.productId
+        ? {
+            id: filters.productId,
+          }
+        : {
+            ...(filters?.categoryId && {
+              category: {
+                id: filters.categoryId,
+              },
+            }),
+            ...(filters?.brandId && {
+              brand: {
+                id: filters.brandId,
+              },
+            }),
+          }),
+    };
+
     return {
+      product: productWhere,
       ...(filters?.serialNumber && {
         serialNumber: ILike(`%${filters.serialNumber}%`),
       }),
       ...(filters?.status && {
         status: filters.status,
-      }),
-      ...(filters?.productId && {
-        product: {
-          id: filters.productId,
-        },
       }),
       ...(filters?.closedAt && {
         closedAt: DateRange(filters.closedAt),
@@ -61,6 +76,9 @@ export class TicketService {
     const result = await Ticket.findPaginated(
       {
         where: this.getWhereOptions(query),
+        order: {
+          createdAt: 'DESC',
+        },
       },
       query,
     );
@@ -230,6 +248,9 @@ export class TicketService {
           client: {
             id: user.id,
           },
+        },
+        order: {
+          createdAt: 'DESC',
         },
       },
       filters,

@@ -10,4 +10,9 @@ export interface ICategoryQuery extends IPaginatedQuery {
    * Search term to filter categories by name.
    */
   name?: string;
+
+  /**
+   * Filter categories that have products from the specified brand.
+   */
+  brandId?: string;
 }
