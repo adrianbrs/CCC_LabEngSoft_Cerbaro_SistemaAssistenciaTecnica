@@ -5,13 +5,15 @@ import { User } from '../user/models/user.entity';
 import { DataSource, In, Not } from 'typeorm';
 import { Message } from './models/message.entity';
 import { TicketService } from '../ticket/ticket.service';
-import { ChatEvents } from '@musat/core';
-import { ChatMessageClientEventDto } from './dtos/chat-message-client-event.dto';
-import { Paginated, PaginatedQueryDto } from '@/shared/pagination';
+import { ChatEvents, isAuthorized, UserRole } from '@musat/core';
+import { Paginated } from '@/shared/pagination';
 import { ChatMessageReadEventDto } from './dtos/chat-message-read-event.dto';
 import { Ticket } from '../ticket/models/ticket.entity';
 import { ApiSocket } from '@/shared/websocket';
 import { ChatJoinServerEventDto } from './dtos/chat-join-server-event.dto';
+import { ChatMessageQueryDto } from './dtos/chat-message-query.dto';
+import { ChatMessageResponseDto } from './dtos/chat-message-response.dto';
+import { ClosedTicketChatError } from './errors/closed-ticket-chat.error';
 
 @Injectable()
 export class ChatService {
@@ -69,15 +71,19 @@ export class ChatService {
   }
 
   async getMessages(
+    user: User,
     ticketId: string,
-    query?: PaginatedQueryDto,
-  ): Promise<Paginated<Message>> {
+    query?: ChatMessageQueryDto,
+  ): Promise<Paginated<ChatMessageResponseDto>> {
     this.logger.log(`Fetching messages for ticket ${ticketId}`);
+
+    // Ensure user has access to the ticket
+    const ticket = await this.ticketService.getOne(user, ticketId);
 
     const result = await Message.findPaginated(
       {
         where: {
-          ticket: { id: ticketId },
+          ticket: { id: ticket.id },
         },
         order: {
           // Always return the most recent messages first
@@ -92,22 +98,30 @@ export class ChatService {
       `Found ${result.totalItems} messages for ticket ${ticketId}`,
     );
 
-    return result;
+    return result.map((message) => ChatMessageResponseDto.create(message));
   }
 
   async sendMessage(
-    from: User,
+    client: ApiSocket,
     messageDto: ChatMessageServerEventDto,
-  ): Promise<void> {
+  ): Promise<ChatMessageResponseDto> {
+    const { user: from } = client.auth;
     this.logger.log(
       `Sending message from user ${from.id} to ticket ${messageDto.ticketId}`,
     );
 
-    await this.ds.transaction(async (manager) => {
-      const { ticketId, content } = messageDto;
+    const { ticketId, content } = messageDto;
+    const ticket = await this.ticketService.getOne(from, ticketId);
 
-      const ticket = await this.ticketService.getOne(from, ticketId);
+    // Do not allow sending messages to closed tickets unless the user is authorized
+    if (ticket.isClosed() && !isAuthorized(from, UserRole.TECHNICIAN)) {
+      this.logger.warn(
+        `Cannot send messages to closed ticket ${ticketId} by user ${from.id}`,
+      );
+      throw new ClosedTicketChatError();
+    }
 
+    return this.ds.transaction(async (manager) => {
       const message = Message.create({
         from,
         ticket,
@@ -116,18 +130,19 @@ export class ChatService {
 
       await manager.save(message);
 
-      this.gateway.server.to(this.getRoom(ticketId)).emit(
-        ChatEvents.MESSAGE_CLIENT,
-        ChatMessageClientEventDto.create({
-          from,
-          ticketId,
-          content,
-        }),
-      );
+      const response = ChatMessageResponseDto.create(message);
+
+      this.gateway.server
+        .to(this.getRoom(ticketId))
+        .except(client.id) // Exclude the sender from receiving their own message again
+        .emit(ChatEvents.MESSAGE_CLIENT, response);
+
+      return response;
     });
   }
 
-  async readMessages(reader: User, eventDto: ChatMessageReadEventDto) {
+  async readMessages(client: ApiSocket, eventDto: ChatMessageReadEventDto) {
+    const { user: reader } = client.auth;
     this.logger.log(
       `Marking messages as read by ${reader.id} for ticket ${eventDto.ticketId}`,
       {
@@ -181,13 +196,16 @@ export class ChatService {
         },
       );
 
-      this.gateway.server.to(this.getRoom(ticketId)).emit(
-        ChatEvents.MESSAGE_READ,
-        ChatMessageReadEventDto.create({
-          ticketId,
-          messageIds: filteredIds,
-        }),
-      );
+      this.gateway.server
+        .to(this.getRoom(ticketId))
+        .except(client.id) // Exclude the reader from receiving their own read event
+        .emit(
+          ChatEvents.MESSAGE_READ,
+          ChatMessageReadEventDto.create({
+            ticketId,
+            messageIds: filteredIds,
+          }),
+        );
     });
   }
 }

@@ -37,6 +37,15 @@ export class Paginated<T> implements IPaginatedEntity<T> {
     return this.page > 1;
   }
 
+  map<R>(fn: (item: T, index: number, items: T[]) => R): Paginated<R> {
+    return Paginated.from({
+      items: this.items.map(fn),
+      page: this.page,
+      limit: this.limit,
+      totalItems: this.totalItems,
+    });
+  }
+
   static from<T>(
     data: [items: T[], totalItems: number],
     query?: IPaginatedQuery,

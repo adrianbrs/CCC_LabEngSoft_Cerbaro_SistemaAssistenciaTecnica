@@ -1,5 +1,4 @@
-import { ITicketEntity } from "../entities";
-import { IUserPublicEvent } from "./user.event";
+import { IMessageResponse, ITicketEntity } from "../entities";
 
 export enum ChatEvents {
   JOIN_SERVER = "chat:join:server",
@@ -11,12 +10,6 @@ export enum ChatEvents {
 
 export interface IChatJoinServerEvent {
   ticketId: ITicketEntity["id"];
-}
-
-export interface IChatMessageClientEvent {
-  from: IUserPublicEvent;
-  ticketId: ITicketEntity["id"];
-  content: string;
 }
 
 export interface IChatMessageServerEvent {
@@ -33,8 +26,8 @@ declare module "./core.event" {
   interface ICoreEventMap {
     [ChatEvents.JOIN_SERVER]: IChatJoinServerEvent;
     [ChatEvents.LEAVE_SERVER]: never;
-    [ChatEvents.MESSAGE_CLIENT]: IChatMessageClientEvent;
-    [ChatEvents.MESSAGE_SERVER]: IChatMessageServerEvent;
+    [ChatEvents.MESSAGE_CLIENT]: IMessageResponse;
+    [ChatEvents.MESSAGE_SERVER]: [IChatMessageServerEvent, IMessageResponse];
     [ChatEvents.MESSAGE_READ]: IChatMessageReadEvent;
   }
 }

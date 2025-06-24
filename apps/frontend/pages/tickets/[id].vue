@@ -37,7 +37,10 @@ const [DefineTicketStatus, UseTicketStatus] = createReusableTemplate();
     <LayoutPage
       v-if="ticket"
       :description="`Aberto em ${$dfns.formatDateTime(ticket.createdAt)}`"
-      :ui="{ body: 'space-y-4' }"
+      :ui="{
+        root: 'h-(--ui-content-height) flex flex-col',
+        body: 'flex-1 flex flex-col gap-4 min-h-0',
+      }"
     >
       <template #title>
         <div class="flex items-center min-w-0 gap-2 md:gap-3">
@@ -68,6 +71,7 @@ const [DefineTicketStatus, UseTicketStatus] = createReusableTemplate();
 
       <UseTicketStatus v-if="!isDesktop" class="w-full" />
       <TicketHeader :ticket="ticket" />
+      <TicketChat :ticket="ticket" />
 
       <TicketUpdateFormModal
         :open="action?.type === 'update'"

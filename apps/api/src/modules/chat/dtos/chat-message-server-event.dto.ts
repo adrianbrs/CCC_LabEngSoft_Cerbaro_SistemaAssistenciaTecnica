@@ -1,7 +1,14 @@
 import { IChatMessageServerEvent } from '@musat/core';
-import { OmitType } from '@nestjs/swagger';
-import { ChatMessageClientEventDto } from './chat-message-client-event.dto';
+import { Expose } from 'class-transformer';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 
-export class ChatMessageServerEventDto
-  extends OmitType(ChatMessageClientEventDto, ['from'])
-  implements IChatMessageServerEvent {}
+export class ChatMessageServerEventDto implements IChatMessageServerEvent {
+  @Expose()
+  @IsUUID('4')
+  @IsNotEmpty()
+  ticketId: string;
+
+  @Expose()
+  @IsNotEmpty()
+  content: string;
+}

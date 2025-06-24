@@ -1,1 +1,1 @@
-export { isValidCPF, isStrongPassword } from "@musat/core";
+export * from "@musat/core";

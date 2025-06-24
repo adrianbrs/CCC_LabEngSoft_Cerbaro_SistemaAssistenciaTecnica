@@ -12,6 +12,17 @@ export enum TicketStatus {
   RESOLVED = "resolved",
 }
 
+export const CLOSED_TICKET_STATUSES = new Set([
+  TicketStatus.RESOLVED,
+  TicketStatus.CANCELLED,
+]);
+
+export const isTicketClosed = (
+  ticket: Pick<ITicketEntity, "status">
+): boolean => {
+  return CLOSED_TICKET_STATUSES.has(ticket.status);
+};
+
 export interface ITicketEntity extends ICoreEntity {
   client: IUserEntity;
   technician: IUserEntity;

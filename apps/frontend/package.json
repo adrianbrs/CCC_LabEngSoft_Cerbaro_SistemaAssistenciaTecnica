@@ -27,6 +27,7 @@
     "lodash-es": "^4.17.21",
     "maska": "^3.1.1",
     "nuxt": "^3.17.5",
+    "socket.io-client": "^4.8.1",
     "tailwindcss": "^4.1.10",
     "typescript": "^5.6.3",
     "uri-tag": "^2.0.0",

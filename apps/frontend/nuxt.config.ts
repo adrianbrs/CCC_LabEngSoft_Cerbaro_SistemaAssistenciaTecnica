@@ -7,6 +7,11 @@ export default defineNuxtConfig({
   devServer: {
     port: 3001,
   },
+  nitro: {
+    experimental: {
+      websocket: true,
+    },
+  },
   // In production environment this would be managed by the reverse proxy
   // like nginx or cloudflare
   ...(!IS_PROD && {

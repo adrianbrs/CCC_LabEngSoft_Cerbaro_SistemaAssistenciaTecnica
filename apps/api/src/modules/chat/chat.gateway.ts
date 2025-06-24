@@ -38,12 +38,12 @@ export class ChatGateway {
     @MessageBody() data: ChatJoinServerEventDto,
     @ConnectedSocket() client: ApiSocket,
   ) {
-    await this.chatService.join(client, data);
+    return this.chatService.join(client, data);
   }
 
   @SubscribeMessage(ChatEvents.LEAVE_SERVER)
   async handleLeave(@ConnectedSocket() client: ApiSocket) {
-    await this.chatService.leave(client);
+    return this.chatService.leave(client);
   }
 
   @SubscribeMessage(ChatEvents.MESSAGE_SERVER)
@@ -51,7 +51,7 @@ export class ChatGateway {
     @MessageBody() data: ChatMessageServerEventDto,
     @ConnectedSocket() client: ApiSocket,
   ) {
-    await this.chatService.sendMessage(client.auth.user, data);
+    return this.chatService.sendMessage(client, data);
   }
 
   @SubscribeMessage(ChatEvents.MESSAGE_READ)
@@ -59,6 +59,6 @@ export class ChatGateway {
     @MessageBody() data: ChatMessageReadEventDto,
     @ConnectedSocket() client: ApiSocket,
   ) {
-    await this.chatService.readMessages(client.auth.user, data);
+    return this.chatService.readMessages(client, data);
   }
 }

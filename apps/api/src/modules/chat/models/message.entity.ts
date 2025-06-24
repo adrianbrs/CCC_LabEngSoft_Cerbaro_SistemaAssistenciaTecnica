@@ -6,7 +6,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Message extends CoreEntity implements IMessageEntity {
-  @ManyToOne(() => Ticket, { eager: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => Ticket, { onDelete: 'CASCADE' })
   @JoinColumn()
   ticket: Ticket;
 
