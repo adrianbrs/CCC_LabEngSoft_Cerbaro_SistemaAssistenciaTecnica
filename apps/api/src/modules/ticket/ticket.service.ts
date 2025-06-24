@@ -106,6 +106,9 @@ export class TicketService {
     return result;
   }
 
+  /**
+   * Get a single ticket by ID if the user has access to it.
+   */
   async getOne(user: User, ticketId: Ticket['id']): Promise<Ticket> {
     if (!isAuthorized(user, UserRole.ADMIN)) {
       // If user doesn't have admin access, restrict access to their own/assigned tickets

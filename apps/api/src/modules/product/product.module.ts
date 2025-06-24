@@ -15,4 +15,4 @@ import { ProductService } from './product.service';
   controllers: [ProductController, BrandController, CategoryController],
   providers: [BrandService, CategoryService, ProductService],
 })
-export class ProductModule { }
+export class ProductModule {}

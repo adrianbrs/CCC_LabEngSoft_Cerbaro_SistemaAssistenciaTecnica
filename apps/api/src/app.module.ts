@@ -12,6 +12,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AddressModule } from './modules/address/address.module';
 import { SharedModule } from './modules/shared/shared.module';
 import { ReviewModule } from './modules/review/review.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { ReviewModule } from './modules/review/review.module';
       },
     }),
     ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot(),
     UserModule,
     ProductModule,
     TicketModule,
@@ -44,6 +47,7 @@ import { ReviewModule } from './modules/review/review.module';
     AddressModule,
     ReviewModule,
     SharedModule,
+    ChatModule,
   ],
   providers: [
     // Global serializer interceptor

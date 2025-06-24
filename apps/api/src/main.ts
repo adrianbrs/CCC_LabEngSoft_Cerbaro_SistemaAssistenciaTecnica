@@ -2,25 +2,14 @@ import './env';
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import {
-  IS_PROD,
-  PORT,
-  COOKIE_SECRET,
-  VERSION,
-  CORS_ORIGIN,
-} from '@/constants/env';
+import { PORT, COOKIE_SECRET, VERSION, CORS_ORIGIN } from '@/constants/env';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { TypeormStore } from 'connect-typeorm';
-import * as session from 'express-session';
-import * as ms from 'ms';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Session } from './modules/auth/models/session.entity';
-import { Repository } from 'typeorm';
-import { Config } from './constants/config';
 import * as cookieParser from 'cookie-parser';
 import { useContainer } from 'class-validator';
+import { SessionMiddleware } from './modules/auth/session.middleware';
+import { ApiWebSocketAdapter } from './shared/websocket/websocket.adapter';
 
 const logger = new Logger('bootstrap');
 
@@ -34,10 +23,6 @@ async function bootstrap() {
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-  const sessionRepository = app.get<Repository<Session>>(
-    getRepositoryToken(Session),
-  );
-
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -50,23 +35,8 @@ async function bootstrap() {
     }),
   );
 
-  app.use(
-    session({
-      secret: COOKIE_SECRET,
-      name: Config.cookies.session.name,
-      resave: false,
-      saveUninitialized: false,
-      rolling: true,
-      cookie: {
-        maxAge: ms('1d'),
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: IS_PROD,
-        signed: true,
-      },
-      store: new TypeormStore().connect(sessionRepository),
-    }),
-  );
+  const sessionMiddleware = app.get(SessionMiddleware);
+  app.use(sessionMiddleware.use.bind(sessionMiddleware));
 
   app.use(cookieParser(COOKIE_SECRET));
 
@@ -97,6 +67,8 @@ async function bootstrap() {
       },
     },
   );
+
+  app.useWebSocketAdapter(new ApiWebSocketAdapter(app));
 
   await app.listen(PORT);
   logger.log(`Application is running on: http://localhost:${PORT}`);

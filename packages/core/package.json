@@ -13,7 +13,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "pnpm build --watch",
-    "build": "tsup-node src/index.ts --format esm,cjs --dts --sourcemap --clean"
+    "build": "tsup-node src --format esm,cjs --dts --sourcemap --clean --splitting false"
   },
   "exports": {
     ".": {

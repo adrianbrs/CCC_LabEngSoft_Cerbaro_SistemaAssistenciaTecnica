@@ -5,10 +5,15 @@ import { User } from '../user/models/user.entity';
 import { UserService } from '../user/user.service';
 import { IS_PROD } from '@/constants/env';
 import { UserLoginDto } from './dtos/user-login.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ISessionEvent, SessionEvents } from '@/shared/events/session';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async login(
     req: Request,
@@ -55,6 +60,10 @@ export class AuthService {
         res.clearCookie(Config.cookies.userId.name, { path: cookieOpts.path });
         resolve();
       });
+    }).finally(() => {
+      this.eventEmitter.emit(SessionEvents.LOGOUT, {
+        sessionId: session.id,
+      } satisfies ISessionEvent<SessionEvents.LOGOUT>);
     });
   }
 }

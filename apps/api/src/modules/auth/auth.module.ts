@@ -6,9 +6,12 @@ import { Session } from './models/session.entity';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
+import { SessionMiddleware } from './session.middleware';
+import { ChatModule } from '../chat/chat.module';
+import { AuthGateway } from './auth.gateway';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Session]), UserModule],
+  imports: [TypeOrmModule.forFeature([Session]), UserModule, ChatModule],
   controllers: [AuthController],
   providers: [
     {
@@ -16,7 +19,10 @@ import { AuthService } from './auth.service';
       useClass: AuthGuard,
     },
     AuthService,
+    SessionMiddleware,
+    AuthGateway,
   ],
+  exports: [AuthService, SessionMiddleware],
 })
 export class AuthModule {}
 
