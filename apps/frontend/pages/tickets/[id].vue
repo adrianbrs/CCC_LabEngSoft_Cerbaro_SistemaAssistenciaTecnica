@@ -3,10 +3,7 @@ import type { ITicketEntity } from "@musat/core";
 import TicketUpdateFormModal from "~/components/ticket/TicketUpdateFormModal.vue";
 
 const route = useRoute();
-
-const { data: ticket, refresh } = await useApiQuery<ITicketEntity>(
-  () => uri`/tickets/${(route.params.id as string | undefined) ?? ""}`
-);
+const { ticket, refresh } = useTicket(() => route.params.id as string);
 const { action, setAction, clearAction } = useCrudActions<ITicketEntity>();
 
 useBreadcrumbs(() =>

@@ -4,7 +4,7 @@ import {
   type IMessageQuery,
   type IMessageResponse,
   type IPaginatedEntity,
-  type IUserPublicData,
+  type IUserPublicResponse,
 } from "@musat/core";
 
 export interface ChatMessage extends IMessageResponse {
@@ -12,7 +12,7 @@ export interface ChatMessage extends IMessageResponse {
 }
 
 export interface ChatMessageGroup {
-  from: IUserPublicData;
+  from: IUserPublicResponse;
   messages: ChatMessage[];
 }
 
@@ -37,7 +37,7 @@ function groupMessages(messages: ChatMessage[]): ChatMessageGroup[] {
 const LOAD_MORE_TIMEOUT = 10000; // 10 seconds
 const MESSAGES_PER_REQUEST = 20;
 
-export function useWsChat(ticketId: MaybeRefOrGetter<string>) {
+export function useWsTicketChat(ticketId: MaybeRefOrGetter<string>) {
   const { user } = useUserSession(true);
   const page = ref(1);
 
@@ -214,9 +214,6 @@ export function useWsChat(ticketId: MaybeRefOrGetter<string>) {
   };
 
   onMounted(() => {
-    ws.emit(ChatEvents.JOIN_SERVER, {
-      ticketId: toValue(ticketId),
-    });
     ws.on(ChatEvents.MESSAGE_CLIENT, onMessage);
     ws.on(ChatEvents.MESSAGE_READ, onRead);
   });
@@ -224,20 +221,6 @@ export function useWsChat(ticketId: MaybeRefOrGetter<string>) {
   onUnmounted(() => {
     ws.off(ChatEvents.MESSAGE_CLIENT, onMessage);
     ws.off(ChatEvents.MESSAGE_READ, onRead);
-    ws.emit(ChatEvents.LEAVE_SERVER);
-  });
-
-  watchEffect(() => {
-    const id = toValue(ticketId);
-
-    if (!id) {
-      ws.emit(ChatEvents.LEAVE_SERVER);
-      return;
-    }
-
-    ws.emit(ChatEvents.JOIN_SERVER, {
-      ticketId: toValue(ticketId),
-    });
   });
 
   const send = async (content: string) => {

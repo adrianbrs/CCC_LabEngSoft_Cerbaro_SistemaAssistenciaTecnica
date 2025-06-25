@@ -1,12 +1,12 @@
 import { Ticket } from '@/modules/ticket/models/ticket.entity';
-import { UserPublicDataDto } from '@/modules/user/dtos/user-public-data.dto';
-import { CoreEntityResponseDto } from '@/shared/core-entity-response.dto';
+import { UserPublicResponseDto } from '@/modules/user/dtos/user-public-response.dto';
+import { EntityResponseDto } from '@/shared/entity-response.dto';
 import { IMessageResponse } from '@musat/core';
 import { Expose, Type } from 'class-transformer';
 import { IsUUID, ValidateNested } from 'class-validator';
 
 export class ChatMessageResponseDto
-  extends CoreEntityResponseDto
+  extends EntityResponseDto
   implements IMessageResponse
 {
   @Expose()
@@ -21,6 +21,6 @@ export class ChatMessageResponseDto
 
   @Expose()
   @ValidateNested()
-  @Type(() => UserPublicDataDto)
-  from: UserPublicDataDto;
+  @Type(() => UserPublicResponseDto)
+  from: UserPublicResponseDto;
 }

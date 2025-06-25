@@ -1,11 +1,6 @@
 <script setup lang="ts">
-import type { ITicketEntity } from "@musat/core";
-
 const route = useRoute();
-
-const { data: ticket } = await useApiQuery<ITicketEntity>(
-  () => uri`/tickets/${(route.params.id as string | undefined) ?? ""}`
-);
+const { ticket } = useTicket(() => route.params.id as string);
 
 useBreadcrumbs(() =>
   ticket.value

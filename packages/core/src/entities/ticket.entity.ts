@@ -1,6 +1,6 @@
 import { ICoreEntity } from "./core.entity";
-import { IUserEntity } from "./user.entity";
-import { IProductEntity } from "./product.entity";
+import { IUserEntity, IUserPublicResponse } from "./user.entity";
+import { IProductEntity, IProductPublicResponse } from "./product.entity";
 import { IPaginatedQuery } from "./paginated.entity";
 import { IDateRangeFilter } from "@/types";
 
@@ -49,3 +49,10 @@ export interface ITicketQuery extends IPaginatedQuery {
 
 export interface ITicketUserQuery
   extends Omit<ITicketQuery, "technicianId" | "clientId"> {}
+
+export interface ITicketResponse
+  extends Omit<ITicketEntity, "client" | "technician" | "product"> {
+  client: IUserPublicResponse;
+  technician: IUserPublicResponse;
+  product: IProductPublicResponse;
+}

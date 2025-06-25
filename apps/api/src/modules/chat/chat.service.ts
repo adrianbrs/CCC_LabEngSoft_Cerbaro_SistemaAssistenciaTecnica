@@ -5,12 +5,15 @@ import { User } from '../user/models/user.entity';
 import { DataSource, In, Not } from 'typeorm';
 import { Message } from './models/message.entity';
 import { TicketService } from '../ticket/ticket.service';
-import { ChatEvents, isAuthorized, UserRole } from '@musat/core';
+import {
+  ChatEvents,
+  isAuthorized,
+  isTicketClosed,
+  UserRole,
+} from '@musat/core';
 import { Paginated } from '@/shared/pagination';
 import { ChatMessageReadEventDto } from './dtos/chat-message-read-event.dto';
-import { Ticket } from '../ticket/models/ticket.entity';
 import { ApiSocket } from '@/shared/websocket';
-import { ChatJoinServerEventDto } from './dtos/chat-join-server-event.dto';
 import { ChatMessageQueryDto } from './dtos/chat-message-query.dto';
 import { ChatMessageResponseDto } from './dtos/chat-message-response.dto';
 import { ClosedTicketChatError } from './errors/closed-ticket-chat.error';
@@ -21,57 +24,14 @@ import uri from 'uri-tag';
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
 
-  readonly chatRoomPrefix = 'chat:';
-
   constructor(
     @Inject(forwardRef(() => ChatGateway))
     private readonly gateway: ChatGateway,
     private readonly ds: DataSource,
+    @Inject(forwardRef(() => TicketService))
     private readonly ticketService: TicketService,
     private readonly notificationService: NotificationService,
   ) {}
-
-  getRoom(ticketId: Ticket['id']): string {
-    return `${this.chatRoomPrefix}:${ticketId}`;
-  }
-
-  isRoom(room: string): boolean {
-    return room.startsWith(`${this.chatRoomPrefix}:`);
-  }
-
-  async join(client: ApiSocket, { ticketId }: ChatJoinServerEventDto) {
-    const { user } = client.auth;
-    this.logger.log(`User ${user.id} joining chat for ticket ${ticketId}`);
-
-    if (client.rooms.has(this.getRoom(ticketId))) {
-      this.logger.warn(
-        `User ${user.id} is already in chat room for ticket ${ticketId}`,
-      );
-      return;
-    }
-
-    // Ensure user has access to the ticket
-    const ticket = await this.ticketService.getOne(user, ticketId);
-
-    // Ensure the user is in just one chat room at a time
-    await this.leave(client);
-
-    // Add the user to the ticket's chat room
-    await client.join(this.getRoom(ticket.id));
-
-    this.logger.log(`User ${user.id} joined ticket ${ticketId}`);
-  }
-
-  async leave(client: ApiSocket) {
-    const { user } = client.auth;
-    this.logger.log(`User ${user.id} leaving chat`);
-
-    // Remove the user from all chat rooms they are in
-    const rooms = [...client.rooms].filter((room) => this.isRoom(room));
-    await Promise.all(rooms.map((room) => client.leave(room)));
-
-    this.logger.log(`User ${user.id} left from ${rooms.length} chat rooms`);
-  }
 
   async getMessages(
     user: User,
@@ -122,7 +82,7 @@ export class ChatService {
     const ticket = await this.ticketService.getOne(from, ticketId);
 
     // Do not allow sending messages to closed tickets unless the user is authorized
-    if (ticket.isClosed() && !isAuthorized(from, UserRole.TECHNICIAN)) {
+    if (isTicketClosed(ticket) && !isAuthorized(from, UserRole.TECHNICIAN)) {
       this.logger.warn(
         `Cannot send messages to closed ticket ${ticketId} by user ${from.id}`,
       );
@@ -144,14 +104,17 @@ export class ChatService {
       });
 
       this.gateway.server
-        .to(this.getRoom(ticketId))
+        .to(this.ticketService.getRoom(ticketId))
         .except(client.id) // Exclude the sender from receiving their own message again
         .emit(ChatEvents.MESSAGE_CLIENT, response);
 
       const isFromClient = from.id === ticket.client.id;
       const readerUser = isFromClient ? ticket.technician : ticket.client;
-      const readerSocket = readerUser.getSocket(this.gateway.server);
-      if (readerSocket && !readerSocket.rooms.has(this.getRoom(ticketId))) {
+      const readerSocket = this.gateway.server.getByUser(readerUser);
+      if (
+        readerSocket &&
+        !readerSocket.rooms.has(this.ticketService.getRoom(ticketId))
+      ) {
         // Reader is not in the chat room, so we notify them
         await this.notificationService.createOne({
           title: 'Nova mensagem',
@@ -236,7 +199,7 @@ export class ChatService {
       });
 
       this.gateway.server
-        .to(this.getRoom(ticketId))
+        .to(this.ticketService.getRoom(ticketId))
         .except(client.id) // Exclude the reader from receiving their own read event
         .emit(ChatEvents.MESSAGE_READ, response);
 

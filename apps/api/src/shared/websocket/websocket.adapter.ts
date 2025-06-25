@@ -6,6 +6,25 @@ import { Session, SessionData } from 'express-session';
 import { AuthData } from '../../modules/auth/auth.interface';
 import { WsException } from '@nestjs/websockets';
 import { User } from '../../modules/user/models/user.entity';
+import { ApiSocketServer, ApiSocketServerUtils } from './types';
+
+function createApiSocketServer(io: Server): ApiSocketServer {
+  const server = io as ApiSocketServer;
+
+  const utils: ApiSocketServerUtils = {
+    getByUser: (user) => {
+      const userId = typeof user === 'string' ? user : user.id;
+      const socketIds = server.sockets.adapter.rooms.get(userId);
+      const userSocketId = socketIds?.size ? Array.from(socketIds)[0] : null;
+      return userSocketId
+        ? server.sockets.sockets.get(userSocketId)
+        : undefined;
+    },
+  };
+
+  Object.assign(server, utils);
+  return server;
+}
 
 export class ApiWebSocketAdapter extends IoAdapter {
   declare protected readonly httpServer: Server;
@@ -17,7 +36,9 @@ export class ApiWebSocketAdapter extends IoAdapter {
   createIOServer(port: number, options?: unknown): Server {
     const sessionMiddleware = this.app.get(SessionMiddleware);
 
-    const io = super.createIOServer(port, options) as Server;
+    const io = createApiSocketServer(
+      super.createIOServer(port, options) as Server,
+    );
 
     // Load session
     io.engine.use(sessionMiddleware.use.bind(sessionMiddleware));

@@ -32,4 +32,4 @@ export interface IUserQuery extends IPaginatedQuery {
   role?: UserRole;
 }
 
-export type IUserPublicData = Pick<IUserEntity, "id" | "name" | "role">;
+export type IUserPublicResponse = Pick<IUserEntity, "id" | "name" | "role">;

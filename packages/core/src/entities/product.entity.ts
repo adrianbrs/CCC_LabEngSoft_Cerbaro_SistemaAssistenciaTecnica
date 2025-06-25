@@ -1,5 +1,5 @@
 import { ICoreEntity } from "./core.entity";
-import { IBrandEntity } from "./brand.entity";
+import { IBrandEntity, IBrandPublicResponse } from "./brand.entity";
 import { ICategoryEntity } from "./category.entity";
 import { IPaginatedQuery } from "./paginated.entity";
 
@@ -24,4 +24,9 @@ export interface IProductQuery extends IPaginatedQuery {
    * Filter products by brand.
    */
   brandId?: string;
+}
+
+export interface IProductPublicResponse
+  extends Pick<IProductEntity, "id" | "model" | "category"> {
+  brand: IBrandPublicResponse;
 }

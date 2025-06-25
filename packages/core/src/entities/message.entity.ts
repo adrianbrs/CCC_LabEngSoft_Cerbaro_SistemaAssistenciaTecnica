@@ -1,7 +1,7 @@
 import { ICoreEntity } from "./core.entity";
 import { IPaginatedQuery } from "./paginated.entity";
 import { ITicketEntity } from "./ticket.entity";
-import { IUserEntity, IUserPublicData } from "./user.entity";
+import { IUserEntity, IUserPublicResponse } from "./user.entity";
 
 export interface IMessageEntity extends ICoreEntity {
   ticket: ITicketEntity;
@@ -13,7 +13,7 @@ export interface IMessageEntity extends ICoreEntity {
 export interface IMessageResponse
   extends Omit<IMessageEntity, "ticket" | "from"> {
   ticketId: ITicketEntity["id"];
-  from: IUserPublicData;
+  from: IUserPublicResponse;
 }
 
 export interface IMessageQuery extends IPaginatedQuery {}

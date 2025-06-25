@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { ITicketEntity } from "@musat/core";
+import type { ITicketResponse } from "@musat/core";
 import type { AccordionItem } from "@nuxt/ui";
 
 type TicketHeaderSlot = (typeof items)["value"][number]["slot"];
 
 const { ticket } = defineProps<{
-  ticket: ITicketEntity;
+  ticket: ITicketResponse;
 }>();
 const expandedModel = defineModel<TicketHeaderSlot>("expanded");
 

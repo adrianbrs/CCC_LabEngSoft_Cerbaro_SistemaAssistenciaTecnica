@@ -13,7 +13,6 @@ import { ChatMessageServerEventDto } from './dtos/chat-message-server-event.dto'
 import { ApiSocket, ApiSocketServer } from '@/shared/websocket';
 import { ChatService } from './chat.service';
 import { ChatMessageReadEventDto } from './dtos/chat-message-read-event.dto';
-import { ChatJoinServerEventDto } from './dtos/chat-join-server-event.dto';
 
 @UsePipes(
   new ValidationPipe({ exceptionFactory: (errors) => new WsException(errors) }),
@@ -32,19 +31,6 @@ export class ChatGateway {
     @Inject(forwardRef(() => ChatService))
     private readonly chatService: ChatService,
   ) {}
-
-  @SubscribeMessage(ChatEvents.JOIN_SERVER)
-  async handleJoin(
-    @MessageBody() data: ChatJoinServerEventDto,
-    @ConnectedSocket() client: ApiSocket,
-  ) {
-    return this.chatService.join(client, data);
-  }
-
-  @SubscribeMessage(ChatEvents.LEAVE_SERVER)
-  async handleLeave(@ConnectedSocket() client: ApiSocket) {
-    return this.chatService.leave(client);
-  }
 
   @SubscribeMessage(ChatEvents.MESSAGE_SERVER)
   async handleSendMessage(

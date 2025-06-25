@@ -1,12 +1,7 @@
 import { Product } from '@/modules/product/models/product.entity';
 import { User } from '@/modules/user/models/user.entity';
 import { CoreEntity } from '@/shared/core.entity';
-import {
-  CLOSED_TICKET_STATUSES,
-  isTicketClosed,
-  ITicketEntity,
-  TicketStatus,
-} from '@musat/core';
+import { ITicketEntity, TicketStatus } from '@musat/core';
 import {
   Column,
   Entity,
@@ -56,8 +51,4 @@ export class Ticket extends CoreEntity implements ITicketEntity {
   @Column()
   @Generated('increment')
   ticketNumber: number;
-
-  isClosed(): boolean {
-    return isTicketClosed(this);
-  }
 }

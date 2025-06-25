@@ -18,3 +18,6 @@ export interface IBrandQuery extends IPaginatedQuery {
    */
   categoryId?: string;
 }
+
+export interface IBrandPublicResponse
+  extends Pick<IBrandEntity, "id" | "name"> {}

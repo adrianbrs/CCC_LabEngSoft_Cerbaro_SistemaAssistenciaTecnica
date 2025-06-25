@@ -2,7 +2,7 @@ import { ICoreEntity } from '@musat/core';
 import { ResponseDto } from './response.dto';
 import { Exclude, Expose } from 'class-transformer';
 
-export class CoreEntityResponseDto extends ResponseDto implements ICoreEntity {
+export class EntityResponseDto extends ResponseDto implements ICoreEntity {
   @Expose()
   id: string;
 

@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import type { ITicketEntity } from "@musat/core";
+import type { ITicketResponse } from "@musat/core";
 import type { FormSubmitEvent } from "@nuxt/ui";
 import * as _ from "lodash-es";
 
 const { ticket, scrollTreshold = 150 } = defineProps<{
-  ticket: ITicketEntity;
+  ticket: ITicketResponse;
   scrollTreshold?: number;
 }>();
 
 const { send, read, loadMore, canLoadMore, loadingMore, groups, loading } =
-  useWsChat(() => ticket.id);
+  useWsTicketChat(() => ticket.id);
 const isClosed = computed(() => isTicketClosed(ticket));
 const messageInput = useTemplateRef("message");
 const messageList = useTemplateRef("messageList");

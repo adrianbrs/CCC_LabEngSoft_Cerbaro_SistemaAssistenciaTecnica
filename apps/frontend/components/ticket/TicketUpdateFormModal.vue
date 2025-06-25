@@ -2,20 +2,20 @@
 import type { FormSubmitEvent } from "@nuxt/ui";
 import type { FetchError } from "ofetch";
 import * as _ from "lodash-es";
-import type { ITicketEntity } from "@musat/core";
+import type { ITicketResponse } from "@musat/core";
 import {
   TicketUpdateSchema,
   type TicketUpdateFormData,
 } from "~/utils/schema/ticket.schema";
 
 const props = defineProps<{
-  ticket: ITicketEntity;
+  ticket: ITicketResponse;
 }>();
 
 const open = defineModel<boolean>("open");
 
 const emit = defineEmits<{
-  success: [ticket: ITicketEntity];
+  success: [ticket: ITicketResponse];
   error: [error?: Error | FetchError];
 }>();
 
@@ -40,7 +40,7 @@ const onSubmit = async ({ data }: FormSubmitEvent<TicketUpdateFormData>) => {
     loading.value = true;
     error.value = undefined;
 
-    const res = await api<ITicketEntity>(uri`/tickets/${props.ticket.id}`, {
+    const res = await api<ITicketResponse>(uri`/tickets/${props.ticket.id}`, {
       method: "PATCH",
       body,
     });

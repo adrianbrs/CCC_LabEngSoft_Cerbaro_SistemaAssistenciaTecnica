@@ -1,11 +1,11 @@
-import { CoreEntityResponseDto } from '@/shared/core-entity-response.dto';
+import { EntityResponseDto } from '@/shared/entity-response.dto';
 import { INotificationResponse } from '@musat/core';
 import { Expose, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
 import { NotificationMetadataDto } from './notification-metadata.dto';
 
 export class NotificationResponseDto
-  extends CoreEntityResponseDto
+  extends EntityResponseDto
   implements INotificationResponse
 {
   @Expose()

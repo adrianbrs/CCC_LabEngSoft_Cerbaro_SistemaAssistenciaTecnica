@@ -6,6 +6,7 @@ import { TicketService } from './ticket.service';
 import { ReviewModule } from '../review/review.module';
 import { UserModule } from '../user/user.module';
 import { NotificationModule } from '../notification/notification.module';
+import { TicketGateway } from './ticket.gateway';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { NotificationModule } from '../notification/notification.module';
     NotificationModule,
   ],
   controllers: [TicketController],
-  providers: [TicketService],
+  providers: [TicketService, TicketGateway],
   exports: [TicketService],
 })
 export class TicketModule {}

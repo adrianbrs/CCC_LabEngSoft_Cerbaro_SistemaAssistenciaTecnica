@@ -10,7 +10,13 @@ import { TicketCreateDto } from './dtos/ticket-create.dto';
 import { User } from '../user/models/user.entity';
 import { Product } from '../product/models/product.entity';
 import { TicketUpdateDto } from './dtos/ticket-update.dto';
-import { isAuthorized, TicketStatus, UserRole } from '@musat/core';
+import {
+  isAuthorized,
+  isTicketClosed,
+  TicketEvents,
+  TicketStatus,
+  UserRole,
+} from '@musat/core';
 import { ReviewService } from '../review/review.service';
 import { TicketQueryDto } from './dtos/ticket-query.dto';
 import { Paginated } from '@/shared/pagination';
@@ -21,6 +27,13 @@ import { NoTechniciansAvailableError } from './errors/no-technicians-available.e
 import { NotificationService } from '../notification/notification.service';
 import { UserService } from '../user/user.service';
 import uri from 'uri-tag';
+import { TicketResponseDto } from './dtos/ticket-response.dto';
+import { TicketGateway } from './ticket.gateway';
+import { ChatService } from '../chat/chat.service';
+import { ApiSocket } from '@/shared/websocket';
+import { TicketJoinServerEventDto } from './dtos/ticket-join-server-event.dto';
+
+const TICKET_ROOM_PREFIX = 'ticket:';
 
 @Injectable()
 export class TicketService {
@@ -33,7 +46,51 @@ export class TicketService {
     private readonly userService: UserService,
     private readonly notificationService: NotificationService,
     private readonly ds: DataSource,
+    @Inject(forwardRef(() => TicketGateway))
+    private readonly gateway: TicketGateway,
   ) {}
+
+  getRoom(ticketId: Ticket['id']): string {
+    return `${TICKET_ROOM_PREFIX}:${ticketId}`;
+  }
+
+  isRoom(room: string): boolean {
+    return room.startsWith(`${TICKET_ROOM_PREFIX}:`);
+  }
+
+  async join(client: ApiSocket, { ticketId }: TicketJoinServerEventDto) {
+    const { user } = client.auth;
+    this.logger.log(`User ${user.id} joining ticket ${ticketId} room`);
+
+    if (client.rooms.has(this.getRoom(ticketId))) {
+      this.logger.warn(
+        `User ${user.id} is already in the room for ticket ${ticketId}`,
+      );
+      return;
+    }
+
+    // Ensure user has access to the ticket
+    const ticket = await this.getOne(user, ticketId);
+
+    // Ensure the user is in just one chat room at a time
+    await this.leave(client);
+
+    // Add the user to the ticket's chat room
+    await client.join(this.getRoom(ticket.id));
+
+    this.logger.log(`User ${user.id} joined ticket ${ticketId}`);
+  }
+
+  async leave(client: ApiSocket) {
+    const { user } = client.auth;
+    this.logger.log(`User ${user.id} leaving ticket rooms`);
+
+    // Remove the user from all chat rooms they are in
+    const rooms = [...client.rooms].filter((room) => this.isRoom(room));
+    await Promise.all(rooms.map((room) => client.leave(room)));
+
+    this.logger.log(`User ${user.id} left from ${rooms.length} ticket rooms`);
+  }
 
   private getWhereOptions(
     filters?: Partial<TicketQueryDto>,
@@ -87,7 +144,10 @@ export class TicketService {
     };
   }
 
-  async getAll(user: User, query?: TicketQueryDto): Promise<Paginated<Ticket>> {
+  async getAll(
+    user: User,
+    query?: TicketQueryDto,
+  ): Promise<Paginated<TicketResponseDto>> {
     this.logger.log(`Fetching all tickets for user ${user.id}`, query);
 
     const result = await Ticket.findPaginated(
@@ -110,16 +170,16 @@ export class TicketService {
 
     this.logger.log(`Found ${result.totalItems} tickets`, query);
 
-    return result;
+    return result.map((ticket) => TicketResponseDto.create(ticket));
   }
 
   /**
    * Get a single ticket by ID if the user has access to it.
    */
-  async getOne(user: User, ticketId: Ticket['id']): Promise<Ticket> {
+  async getOne(user: User, ticketId: Ticket['id']): Promise<TicketResponseDto> {
     if (!isAuthorized(user, UserRole.ADMIN)) {
       // If user doesn't have admin access, restrict access to their own/assigned tickets
-      return Ticket.findOneOrFail({
+      const ticket = await Ticket.findOneOrFail({
         where: [
           {
             id: ticketId,
@@ -135,13 +195,17 @@ export class TicketService {
           },
         ],
       });
+
+      return TicketResponseDto.create(ticket);
     }
 
-    return Ticket.findOneOrFail({
+    const ticket = await Ticket.findOneOrFail({
       where: {
         id: ticketId,
       },
     });
+
+    return TicketResponseDto.create(ticket);
   }
 
   /**
@@ -149,7 +213,10 @@ export class TicketService {
    * based on a round-robin algorithm
    * Notifies the technician via email about the new ticket.
    */
-  async create(client: User, ticketDto: TicketCreateDto): Promise<Ticket> {
+  async create(
+    client: User,
+    ticketDto: TicketCreateDto,
+  ): Promise<TicketResponseDto> {
     this.logger.log(`Creating ticket for user ${client.id}`);
 
     const { productId, ...ticketData } = ticketDto;
@@ -226,7 +293,7 @@ export class TicketService {
         },
       });
 
-      return ticket;
+      return TicketResponseDto.create(ticket);
     });
   }
 
@@ -239,7 +306,7 @@ export class TicketService {
     user: User,
     ticketId: Ticket['id'],
     updates: TicketUpdateDto,
-  ): Promise<Ticket> {
+  ): Promise<TicketResponseDto> {
     this.logger.log(`Updating ticket ${ticketId} by ${user.id}`, updates);
 
     const ticket = await Ticket.findOneOrFail({
@@ -255,21 +322,88 @@ export class TicketService {
       throw new UnauthorizedException();
     }
 
-    if (updates.status !== ticket.status) {
+    let closed = false;
+    let reopened = false;
+    let statusChanged = false;
+
+    if (updates.status && updates.status !== ticket.status) {
+      statusChanged = true;
+
       // If the status is being changed, we need to handle the closedAt field
-      if (
-        [TicketStatus.RESOLVED, TicketStatus.CANCELLED].includes(updates.status)
-      ) {
+      if (isTicketClosed(updates)) {
         ticket.closedAt = new Date();
-      } else {
+        closed = true;
+      } else if (ticket.closedAt) {
         ticket.closedAt = null;
+        reopened = true;
       }
     }
 
-    Ticket.merge(ticket, { ...updates });
-    await this.userService.sendTicketUpdateEmail(ticket.client);
+    return this.ds.transaction(async (manager) => {
+      Ticket.merge(ticket, { ...updates });
 
-    return ticket.save();
+      if (closed) {
+        if (ticket.status === TicketStatus.RESOLVED) {
+          await this.notificationService.createOne({
+            title: 'Solicitação finalizada',
+            content: `A solicitação #${ticket.ticketNumber} foi finalizada com sucesso.`,
+            userId: ticket.client.id,
+            metadata: {
+              href: uri`/my-tickets/${ticket.id}`,
+            },
+          });
+        } else {
+          await this.notificationService.createOne({
+            title: 'Solicitação cancelada',
+            content: `A solicitação #${ticket.ticketNumber} foi cancelada.`,
+            userId: ticket.client.id,
+            metadata: {
+              href: uri`/my-tickets/${ticket.id}`,
+            },
+          });
+        }
+      } else if (reopened) {
+        await this.notificationService.createOne({
+          title: 'Solicitação reaberta',
+          content: `A solicitação #${ticket.ticketNumber} foi reaberta.`,
+          userId: ticket.client.id,
+          metadata: {
+            href: uri`/my-tickets/${ticket.id}`,
+          },
+        });
+      } else if (statusChanged) {
+        if (updates.status === TicketStatus.AWAITING_CLIENT) {
+          await this.notificationService.createOne({
+            title: 'Solicitação aguardando resposta',
+            content: `A solicitação #${ticket.ticketNumber} está aguardando sua resposta.`,
+            userId: ticket.client.id,
+            metadata: {
+              href: uri`/my-tickets/${ticket.id}`,
+            },
+          });
+        } else {
+          await this.notificationService.createOne({
+            title: 'Solicitação atualizada',
+            content: `A solicitação #${ticket.ticketNumber} foi atualizada.`,
+            userId: ticket.client.id,
+            metadata: {
+              href: uri`/my-tickets/${ticket.id}`,
+            },
+          });
+        }
+      }
+
+      await this.userService.sendTicketUpdateEmail(ticket.client);
+
+      const response = TicketResponseDto.create(await manager.save(ticket));
+
+      // Send ticket updates to everyone in the ticket room
+      this.gateway.server
+        .to(this.getRoom(ticketId))
+        .emit(TicketEvents.UPDATE_CLIENT, response);
+
+      return response;
+    });
   }
 
   async delete(ticketId: Ticket['id']): Promise<void> {
