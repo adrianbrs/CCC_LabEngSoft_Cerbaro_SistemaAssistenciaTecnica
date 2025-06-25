@@ -9,6 +9,7 @@ import {
   ChatEvents,
   isAuthorized,
   isTicketClosed,
+  TicketStatus,
   UserRole,
 } from '@musat/core';
 import { Paginated } from '@/shared/pagination';
@@ -19,6 +20,7 @@ import { ChatMessageResponseDto } from './dtos/chat-message-response.dto';
 import { ClosedTicketChatError } from './errors/closed-ticket-chat.error';
 import { NotificationService } from '../notification/notification.service';
 import uri from 'uri-tag';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class ChatService {
@@ -31,6 +33,7 @@ export class ChatService {
     @Inject(forwardRef(() => TicketService))
     private readonly ticketService: TicketService,
     private readonly notificationService: NotificationService,
+    private readonly userService: UserService,
   ) {}
 
   async getMessages(
@@ -79,17 +82,18 @@ export class ChatService {
     );
 
     const { ticketId, content } = messageDto;
-    const ticket = await this.ticketService.getOne(from, ticketId);
-
-    // Do not allow sending messages to closed tickets unless the user is authorized
-    if (isTicketClosed(ticket) && !isAuthorized(from, UserRole.TECHNICIAN)) {
-      this.logger.warn(
-        `Cannot send messages to closed ticket ${ticketId} by user ${from.id}`,
-      );
-      throw new ClosedTicketChatError();
-    }
 
     return this.ds.transaction(async (manager) => {
+      const ticket = await this.ticketService.getOne(from, ticketId);
+
+      // Do not allow sending messages to closed tickets unless the user is authorized
+      if (isTicketClosed(ticket) && !isAuthorized(from, UserRole.TECHNICIAN)) {
+        this.logger.warn(
+          `Cannot send messages to closed ticket ${ticketId} by user ${from.id}`,
+        );
+        throw new ClosedTicketChatError();
+      }
+
       const message = Message.create({
         from,
         ticket,
@@ -103,11 +107,13 @@ export class ChatService {
         ticketId: ticket.id,
       });
 
+      // Send the message to the chat room
       this.gateway.server
         .to(this.ticketService.getRoom(ticketId))
         .except(client.id) // Exclude the sender from receiving their own message again
         .emit(ChatEvents.MESSAGE_CLIENT, response);
 
+      // Send message notification to readers outside the chat room
       const isFromClient = from.id === ticket.client.id;
       const readerUser = isFromClient ? ticket.technician : ticket.client;
       const readerSocket = this.gateway.server.getByUser(readerUser);
@@ -126,6 +132,32 @@ export class ChatService {
               : uri`/my-tickets/${ticket.id}`,
           },
         });
+      }
+
+      // Update ticket status if is OPEN and the message is from the technician
+      if (
+        ticket.status === TicketStatus.OPEN &&
+        from.id === ticket.technician.id
+      ) {
+        const technician = await this.userService.getOne(ticket.technician.id);
+        await this.ticketService.update(technician, ticket.id, {
+          status: TicketStatus.IN_PROGRESS,
+        });
+        // Update the ticket status if is AWAITING_CLIENT and the message is from the client
+      } else if (
+        ticket.status === TicketStatus.AWAITING_CLIENT &&
+        from.id === ticket.client.id
+      ) {
+        const client = await this.userService.getOne(ticket.client.id);
+        await this.ticketService.update(
+          client,
+          ticket.id,
+          {
+            status: TicketStatus.IN_PROGRESS,
+          },
+          // This is improtant because the client is not allowed to change the ticket status
+          true,
+        );
       }
 
       return response;

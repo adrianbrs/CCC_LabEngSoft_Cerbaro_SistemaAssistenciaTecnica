@@ -29,7 +29,6 @@ import { UserService } from '../user/user.service';
 import uri from 'uri-tag';
 import { TicketResponseDto } from './dtos/ticket-response.dto';
 import { TicketGateway } from './ticket.gateway';
-import { ChatService } from '../chat/chat.service';
 import { ApiSocket } from '@/shared/websocket';
 import { TicketJoinServerEventDto } from './dtos/ticket-join-server-event.dto';
 
@@ -301,11 +300,14 @@ export class TicketService {
    * Function to update a ticket's status attribute.
    * Accessible only to technicians and admins.
    * Only the technician assigned to the ticket can update it.
+   *
+   * If the `isInternal` flag is set to `true`, authorization checks will be skipped.
    */
   async update(
     user: User,
     ticketId: Ticket['id'],
     updates: TicketUpdateDto,
+    isInternal = false,
   ): Promise<TicketResponseDto> {
     this.logger.log(`Updating ticket ${ticketId} by ${user.id}`, updates);
 
@@ -317,7 +319,8 @@ export class TicketService {
 
     if (
       ticket.technician.id !== user.id &&
-      !isAuthorized(user, UserRole.ADMIN)
+      !isAuthorized(user, UserRole.ADMIN) &&
+      !isInternal
     ) {
       throw new UnauthorizedException();
     }
@@ -381,7 +384,8 @@ export class TicketService {
               href: uri`/my-tickets/${ticket.id}`,
             },
           });
-        } else {
+          // Skip notification when the ticket is updated by the client due to some internal logic
+        } else if (user.id !== ticket.client.id) {
           await this.notificationService.createOne({
             title: 'Solicitação atualizada',
             content: `A solicitação #${ticket.ticketNumber} foi atualizada.`,
@@ -391,6 +395,18 @@ export class TicketService {
             },
           });
         }
+      }
+
+      // Also notify the technician if the status changed and they are not the one updating it
+      if (statusChanged && user.id !== ticket.technician.id) {
+        await this.notificationService.createOne({
+          title: 'Solicitação atualizada',
+          content: `A solicitação #${ticket.ticketNumber} foi atualizada.`,
+          userId: ticket.technician.id,
+          metadata: {
+            href: uri`/tickets/${ticket.id}`,
+          },
+        });
       }
 
       await this.userService.sendTicketUpdateEmail(ticket.client);
