@@ -15,11 +15,12 @@ import { ReviewService } from '../review/review.service';
 import { TicketQueryDto } from './dtos/ticket-query.dto';
 import { Paginated } from '@/shared/pagination';
 import { TicketUserQueryDto } from './dtos/ticket-user-query.dto';
-import { FindOptionsWhere, ILike } from 'typeorm';
+import { DataSource, FindOptionsWhere, ILike } from 'typeorm';
 import { DateRange } from '@/shared/dtos';
 import { NoTechniciansAvailableError } from './errors/no-technicians-available.error';
 import { NotificationService } from '../notification/notification.service';
 import { UserService } from '../user/user.service';
+import uri from 'uri-tag';
 
 @Injectable()
 export class TicketService {
@@ -28,8 +29,10 @@ export class TicketService {
   constructor(
     @Inject(forwardRef(() => ReviewService))
     private readonly reviewService: ReviewService,
-    @Inject(forwardRef(()=> UserService))
-    private readonly userService: UserService
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
+    private readonly notificationService: NotificationService,
+    private readonly ds: DataSource,
   ) {}
 
   private getWhereOptions(
@@ -205,15 +208,26 @@ export class TicketService {
       technician,
     });
 
-    await Ticket.save(ticket);
+    return this.ds.transaction(async (manager) => {
+      await manager.save(ticket);
 
-    this.logger.log(
-      `Ticket ${ticket.id} created and assigned to technician ${technician.id}`,
-    );
+      this.logger.log(
+        `Ticket ${ticket.id} created and assigned to technician ${technician.id}`,
+      );
 
-    await this.userService.sendTicketAssignedEmail(technician);
+      await this.userService.sendTicketAssignedEmail(technician);
 
-    return ticket;
+      await this.notificationService.createOne({
+        title: 'Nova solicitação',
+        content: `Você possui uma nova solicitação assignada #${ticket.ticketNumber}.`,
+        userId: technician.id,
+        metadata: {
+          href: uri`/tickets/${ticket.id}`,
+        },
+      });
+
+      return ticket;
+    });
   }
 
   /**

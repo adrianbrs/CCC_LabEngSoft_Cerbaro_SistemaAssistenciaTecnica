@@ -5,15 +5,17 @@ import { Ticket } from './models/ticket.entity';
 import { TicketService } from './ticket.service';
 import { ReviewModule } from '../review/review.module';
 import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Ticket]),
     forwardRef(() => ReviewModule),
     forwardRef(() => UserModule),
+    NotificationModule,
   ],
   controllers: [TicketController],
   providers: [TicketService],
-  exports: [TicketService], 
+  exports: [TicketService],
 })
 export class TicketModule {}

@@ -1,13 +1,18 @@
 import { CORS_ORIGIN } from '@/constants/env';
 import { ISessionEvent, SessionEvents } from '@/shared/events/session';
 import { ApiSocket, ApiSocketServer } from '@/shared/websocket';
+import { UsePipes, ValidationPipe } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   OnGatewayConnection,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 
+@UsePipes(
+  new ValidationPipe({ exceptionFactory: (errors) => new WsException(errors) }),
+)
 @WebSocketGateway({
   cors: {
     origin: CORS_ORIGIN,

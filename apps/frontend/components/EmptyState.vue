@@ -6,6 +6,9 @@ export interface EmptyStateProps {
   title?: string;
   description?: string;
   actions?: ButtonProps[];
+  ui?: {
+    icon?: string;
+  };
 }
 </script>
 
@@ -15,6 +18,7 @@ const {
   title = undefined,
   description = undefined,
   actions = undefined,
+  ui = undefined,
 } = defineProps<EmptyStateProps>();
 </script>
 
@@ -22,7 +26,7 @@ const {
   <div class="space-y-6 w-full">
     <div class="flex items-center justify-center">
       <slot name="asset">
-        <UIcon :name="icon" class="size-10 md:size-12" />
+        <UIcon :name="icon" :class="[ui?.icon ?? 'size-10 md:size-12']" />
       </slot>
     </div>
     <div class="space-y-2">

@@ -44,6 +44,9 @@ export class ApiWebSocketAdapter extends IoAdapter {
           return next(new WsException('Unauthorized'));
         }
 
+        // Join the user to their own user ID room so it's easier to send private messages
+        await socket.join(socket.auth.user.id);
+
         next();
       })();
     });

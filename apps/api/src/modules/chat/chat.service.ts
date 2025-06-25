@@ -14,6 +14,8 @@ import { ChatJoinServerEventDto } from './dtos/chat-join-server-event.dto';
 import { ChatMessageQueryDto } from './dtos/chat-message-query.dto';
 import { ChatMessageResponseDto } from './dtos/chat-message-response.dto';
 import { ClosedTicketChatError } from './errors/closed-ticket-chat.error';
+import { NotificationService } from '../notification/notification.service';
+import uri from 'uri-tag';
 
 @Injectable()
 export class ChatService {
@@ -26,6 +28,7 @@ export class ChatService {
     private readonly gateway: ChatGateway,
     private readonly ds: DataSource,
     private readonly ticketService: TicketService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   getRoom(ticketId: Ticket['id']): string {
@@ -144,6 +147,23 @@ export class ChatService {
         .to(this.getRoom(ticketId))
         .except(client.id) // Exclude the sender from receiving their own message again
         .emit(ChatEvents.MESSAGE_CLIENT, response);
+
+      const isFromClient = from.id === ticket.client.id;
+      const readerUser = isFromClient ? ticket.technician : ticket.client;
+      const readerSocket = readerUser.getSocket(this.gateway.server);
+      if (readerSocket && !readerSocket.rooms.has(this.getRoom(ticketId))) {
+        // Reader is not in the chat room, so we notify them
+        await this.notificationService.createOne({
+          title: 'Nova mensagem',
+          content: `Nova mensagem na solicitação #${ticket.ticketNumber}`,
+          userId: readerUser.id,
+          metadata: {
+            href: isFromClient
+              ? uri`/tickets/${ticket.id}`
+              : uri`/my-tickets/${ticket.id}`,
+          },
+        });
+      }
 
       return response;
     });

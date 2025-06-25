@@ -6,6 +6,7 @@ import { Exclude, Transform } from 'class-transformer';
 import { hash, compare } from 'bcrypt';
 import { BCRYPT_SALT_ROUNDS } from '@/constants/env';
 import { formatCpf } from '@musat/core';
+import { ApiSocket, ApiSocketServer } from '@/shared/websocket';
 
 @Entity()
 export class User extends CoreEntity implements IUserEntity {
@@ -111,5 +112,15 @@ export class User extends CoreEntity implements IUserEntity {
     hash: string,
   ): Promise<boolean> {
     return compare(password, hash);
+  }
+
+  getSocketId(server: ApiSocketServer): string | null {
+    const socketIds = server.sockets.adapter.rooms.get(this.id);
+    return socketIds?.size ? Array.from(socketIds)[0] : null;
+  }
+
+  getSocket(server: ApiSocketServer): ApiSocket | null {
+    const socketId = this.getSocketId(server);
+    return socketId ? (server.sockets.sockets.get(socketId) ?? null) : null;
   }
 }

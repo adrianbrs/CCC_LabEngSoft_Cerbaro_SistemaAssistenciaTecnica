@@ -1,33 +1,44 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
-import { Authorize } from '../auth/auth.decorator';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Query,
+} from '@nestjs/common';
 import { User } from '@/modules/user/models/user.entity';
 import { NotificationService } from './notification.service';
-import { NotificationCreateDto} from './dtos/notification-create.dto'
 import { LoggedUser } from '../auth/auth.decorator';
+import { NotificationQueryDto } from './dtos/notification-query.dto';
 
 @Controller('notifications')
-export class NotificationController{
-    constructor(private readonly notificationService: NotificationService){}
-    /**
-     * Gets all notifications of the currently logged user
-     */
-    @Get('/me')
-    async getMyNotifications(@LoggedUser() client: User){
-        return this.notificationService.getMine(client);
-    }
+export class NotificationController {
+  constructor(private readonly notificationService: NotificationService) {}
+  /**
+   * Gets all notifications of the currently logged user
+   */
+  @Get('/me')
+  async getMyNotifications(
+    @LoggedUser() client: User,
+    @Query() query: NotificationQueryDto,
+  ) {
+    return this.notificationService.getMine(client, query);
+  }
 
-    @Get('/:id')
-    async getOne(@Param('id') id: string){
-        return this.notificationService.getOne(id);
-    }
+  @Get('/:id')
+  async getOne(
+    @LoggedUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.notificationService.getOne(user, id);
+  }
 
-    @Post()
-    async create(@Body() dto: NotificationCreateDto){
-        return this.notificationService.create(dto);
-    }
-
-    @Delete('/:id')
-    async delete(@Param('id') id: string){
-        return this.notificationService.delete(id);
-    }
+  @Delete('/:id')
+  async delete(
+    @LoggedUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.notificationService.deleteOne(user, id);
+  }
 }
