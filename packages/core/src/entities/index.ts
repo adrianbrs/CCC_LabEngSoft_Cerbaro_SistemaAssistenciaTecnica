@@ -9,3 +9,4 @@ export * from "./ticket.entity";
 export * from "./review.entity";
 export * from "./paginated.entity";
 export * from "./message.entity";
+export * from './notification.entity';

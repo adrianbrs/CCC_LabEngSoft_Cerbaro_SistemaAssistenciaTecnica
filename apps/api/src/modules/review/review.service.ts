@@ -31,15 +31,6 @@ export class ReviewService {
       },
     });
 
-    console.log(
-      'TICKET ID: ' +
-        ticket.id +
-        '\n VAMO TESTAR userID \n ' +
-        user.id +
-        '\n VAMO TESTAR TICKET.CLIENT \n ' +
-        ticket.client.id,
-    );
-
     if (
       ticket.client.id !== user.id ||
       ticket.status !== TicketStatus.RESOLVED

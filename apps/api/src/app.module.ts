@@ -14,6 +14,7 @@ import { SharedModule } from './modules/shared/shared.module';
 import { ReviewModule } from './modules/review/review.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     CsrfModule,
     AddressModule,
     ReviewModule,
+    NotificationModule,
     SharedModule,
     ChatModule,
   ],

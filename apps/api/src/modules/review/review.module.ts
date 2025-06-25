@@ -5,15 +5,17 @@ import { ReviewController } from './review.controller';
 import { ReviewService } from './review.service';
 import { TicketModule } from '../ticket/ticket.module';
 import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Review]),
     forwardRef(() => TicketModule),
     forwardRef(() => UserModule),
+    //forwardRef(()=> NotificationModule)
   ],
   controllers: [ReviewController],
   providers: [ReviewService],
-  exports: [ReviewService], // 👈 exporta para que outros módulos possam usar
+  exports: [ReviewService], 
 })
 export class ReviewModule {}

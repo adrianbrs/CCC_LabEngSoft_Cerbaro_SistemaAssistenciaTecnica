@@ -18,6 +18,8 @@ import { TicketUserQueryDto } from './dtos/ticket-user-query.dto';
 import { FindOptionsWhere, ILike } from 'typeorm';
 import { DateRange } from '@/shared/dtos';
 import { NoTechniciansAvailableError } from './errors/no-technicians-available.error';
+import { NotificationService } from '../notification/notification.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class TicketService {
@@ -26,6 +28,8 @@ export class TicketService {
   constructor(
     @Inject(forwardRef(() => ReviewService))
     private readonly reviewService: ReviewService,
+    @Inject(forwardRef(()=> UserService))
+    private readonly userService: UserService
   ) {}
 
   private getWhereOptions(
@@ -207,7 +211,7 @@ export class TicketService {
       `Ticket ${ticket.id} created and assigned to technician ${technician.id}`,
     );
 
-    // await this.userService.sendTicketAssignedEmail(technician);
+    await this.userService.sendTicketAssignedEmail(technician);
 
     return ticket;
   }
@@ -249,7 +253,7 @@ export class TicketService {
     }
 
     Ticket.merge(ticket, { ...updates });
-    //await this.userService.sendTicketUpdateEmail(ticket.client);
+    await this.userService.sendTicketUpdateEmail(ticket.client);
 
     return ticket.save();
   }
