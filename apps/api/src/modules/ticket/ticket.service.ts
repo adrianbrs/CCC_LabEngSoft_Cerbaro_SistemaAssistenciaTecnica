@@ -21,7 +21,7 @@ import { ReviewService } from '../review/review.service';
 import { TicketQueryDto } from './dtos/ticket-query.dto';
 import { Paginated } from '@/shared/pagination';
 import { TicketUserQueryDto } from './dtos/ticket-user-query.dto';
-import { DataSource, FindOptionsWhere, ILike } from 'typeorm';
+import { DataSource, FindOptionsWhere, ILike, Not } from 'typeorm';
 import { DateRange } from '@/shared/dtos';
 import { NoTechniciansAvailableError } from './errors/no-technicians-available.error';
 import { NotificationService } from '../notification/notification.service';
@@ -226,6 +226,8 @@ export class TicketService {
 
     const technicians = await User.find({
       where: {
+        // Avoid assigning the ticket to the client when they are also a technician
+        id: Not(client.id),
         role: UserRole.TECHNICIAN,
       },
       order: {
