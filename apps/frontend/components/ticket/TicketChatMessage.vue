@@ -1,18 +1,43 @@
 <script setup lang="ts">
-import type { IMessageResponse } from "@musat/core";
-
 const props = defineProps<{
-  message: IMessageResponse;
+  message: ChatMessage;
   header?: boolean;
+}>();
+
+const emit = defineEmits<{
+  read: [ChatMessage];
 }>();
 
 const { user } = useUserSession(true);
 const isFromMe = computed(() => user.value?.id === props.message.from.id);
 const showHeader = computed(() => !isFromMe.value && !!props.header);
+const messageRef = useTemplateRef("message");
+const isVisible = useElementVisibility(messageRef, {
+  threshold: 1,
+});
+
+const minReadTime = 1500; // 1.5 seconds
+const isVisibleDebounced = useDebounce(isVisible, minReadTime);
+
+watch(
+  isVisibleDebounced,
+  (visible) => {
+    if (
+      visible &&
+      !props.message.read &&
+      props.message.from.id !== user.value.id
+    ) {
+      emit("read", props.message);
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
   <li
+    v-bind="$attrs"
+    ref="message"
     :class="[
       'w-full flex items-center not-first:[&>div>h5]:hidden',
       isFromMe
@@ -30,12 +55,26 @@ const showHeader = computed(() => !isFromMe.value && !!props.header);
         {{ message.content }}
 
         <span
-          class="flex float-right ml-2 mt-2"
+          class="flex items-center gap-1 float-right ml-2 mt-2 relative -bottom-1 -right-1 text-muted"
           :title="$dfns.formatDateTime(message.createdAt)"
         >
-          <span class="text-xs text-muted">
+          <span class="text-xs">
             {{ $dfns.formatTime(message.createdAt) }}
           </span>
+
+          <template v-if="isFromMe">
+            <UIcon
+              v-if="message.loading"
+              name="i-mdi-clock-outline"
+              class="size-4"
+            />
+            <UIcon
+              v-else-if="message.read"
+              name="i-mdi-check-all"
+              class="size-4 text-secondary"
+            />
+            <UIcon v-else name="i-mdi-check" class="size-4" />
+          </template>
         </span>
       </p>
     </div>

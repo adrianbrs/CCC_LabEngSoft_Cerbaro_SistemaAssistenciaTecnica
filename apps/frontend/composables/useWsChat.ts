@@ -1,5 +1,6 @@
 import {
   ChatEvents,
+  type IChatMessageReadEvent,
   type IMessageQuery,
   type IMessageResponse,
   type IPaginatedEntity,
@@ -40,7 +41,7 @@ export function useWsChat(ticketId: MaybeRefOrGetter<string>) {
   const { user } = useUserSession(true);
   const page = ref(1);
 
-  const ws = useWs();
+  const { ws, emitAsync } = useWs();
   const api = useApiQuery<
     IPaginatedEntity<IMessageResponse>,
     IMessageQuery,
@@ -93,6 +94,10 @@ export function useWsChat(ticketId: MaybeRefOrGetter<string>) {
 
   // Update messages with latest data from the API
   watch(api.data, (newData) => {
+    if (!newData) {
+      return;
+    }
+
     // Messages already load, just append new messages
     if (messages.value.length) {
       newData?.items.forEach((item) => {
@@ -118,10 +123,15 @@ export function useWsChat(ticketId: MaybeRefOrGetter<string>) {
   const sendError = ref<Error | null>(null);
 
   const onMessage = (data: ChatMessage | IMessageResponse, prepend = false) => {
-    const message: ChatMessage = {
+    // Sanity check for ticketId
+    if (data.ticketId !== toValue(ticketId)) {
+      return;
+    }
+
+    const message = reactive<ChatMessage>({
       ...data,
       loading: (data as ChatMessage).loading ?? false,
-    };
+    });
     const existingMessage = messageMap.value.get(message.id);
 
     if (existingMessage) {
@@ -154,7 +164,7 @@ export function useWsChat(ticketId: MaybeRefOrGetter<string>) {
   const updateMessage = (id: string, update: Partial<ChatMessage>) => {
     const message = messageMap.value.get(id);
     if (!message) {
-      console.warn(`Message with id ${id} not found`);
+      // The user didn't load the message yet, so we can't update it
       return;
     }
     Object.assign(message, update);
@@ -192,15 +202,28 @@ export function useWsChat(ticketId: MaybeRefOrGetter<string>) {
     messageMap.value.delete(id);
   };
 
+  const onRead = (event: IChatMessageReadEvent) => {
+    if (event.ticketId !== toValue(ticketId)) {
+      return;
+    }
+
+    const { messageIds } = event;
+    messageIds.forEach((id) => {
+      updateMessage(id, { read: true });
+    });
+  };
+
   onMounted(() => {
     ws.emit(ChatEvents.JOIN_SERVER, {
       ticketId: toValue(ticketId),
     });
     ws.on(ChatEvents.MESSAGE_CLIENT, onMessage);
+    ws.on(ChatEvents.MESSAGE_READ, onRead);
   });
 
   onUnmounted(() => {
     ws.off(ChatEvents.MESSAGE_CLIENT, onMessage);
+    ws.off(ChatEvents.MESSAGE_READ, onRead);
     ws.emit(ChatEvents.LEAVE_SERVER);
   });
 
@@ -239,43 +262,53 @@ export function useWsChat(ticketId: MaybeRefOrGetter<string>) {
 
     onMessage(message);
 
-    return new Promise<IMessageResponse>((resolve, reject) => {
-      ws.once("exception", reject);
-      ws.emit(
-        ChatEvents.MESSAGE_SERVER,
-        {
-          ticketId: toValue(ticketId),
-          content: content,
-        },
-        (res) => {
-          ws.off("exception", reject);
-          resolve(res);
-        }
-      );
-    })
-      .then((res) => {
-        updateMessage(message.id, res);
-        return res;
-      })
-      .catch((err) => {
-        removeMessage(message.id);
-        sendError.value = err as Error;
-        throw err;
-      })
-      .finally(() => {
-        sending.value = false;
+    try {
+      const res = await emitAsync(ChatEvents.MESSAGE_SERVER, {
+        ticketId: toValue(ticketId),
+        content: content,
       });
+
+      updateMessage(message.id, {
+        ...res,
+        loading: false,
+      });
+    } catch (err) {
+      removeMessage(message.id);
+      sendError.value = err as Error;
+      throw err;
+    } finally {
+      sending.value = false;
+    }
   };
+
+  const read = createBulkOperation(
+    async (messages: ChatMessage[]) => {
+      const res = await emitAsync(ChatEvents.MESSAGE_READ, {
+        ticketId: toValue(ticketId),
+        messageIds: messages.map((m) => m.id),
+      });
+
+      res.messageIds.forEach((id) => {
+        updateMessage(id, { read: true });
+      });
+
+      return res;
+    },
+    {
+      throttle: 500,
+    }
+  );
 
   return {
     send,
     loadMore,
+    read,
     canLoadMore,
     groups,
     messages,
     sending: useDebounce(sending, 150),
     sendError,
-    loading: computed(() => !api.data && api.status.value === "pending"),
+    loading: computed(() => !api.data.value && api.status.value === "pending"),
     loadingMore: readonly(loadingMore),
   };
 }

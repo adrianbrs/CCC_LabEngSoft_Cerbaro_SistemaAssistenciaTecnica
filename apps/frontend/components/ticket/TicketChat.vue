@@ -3,29 +3,29 @@ import type { ITicketEntity } from "@musat/core";
 import type { FormSubmitEvent } from "@nuxt/ui";
 import * as _ from "lodash-es";
 
-const { ticket, scrollTreshold = 200 } = defineProps<{
+const { ticket, scrollTreshold = 150 } = defineProps<{
   ticket: ITicketEntity;
   scrollTreshold?: number;
 }>();
 
-const { send, loadMore, canLoadMore, loadingMore, groups, loading } = useWsChat(
-  () => ticket.id
-);
+const { send, read, loadMore, canLoadMore, loadingMore, groups, loading } =
+  useWsChat(() => ticket.id);
 const isClosed = computed(() => isTicketClosed(ticket));
 const messageInput = useTemplateRef("message");
 const messageList = useTemplateRef("messageList");
 const { arrivedState, y: scrollY } = useScroll(messageList, {
   behavior: "instant",
+  idle: 100,
   throttle: 100,
   offset: {
-    bottom: scrollTreshold,
+    top: scrollTreshold,
   },
 });
 const isAtBottom = computed(() => arrivedState.bottom);
 
 useInfiniteScroll(messageList, loadMore, {
   canLoadMore: () => canLoadMore.value && !loadingMore.value,
-  distance: 10,
+  distance: 20,
   throttle: 100,
   interval: 100,
   direction: "top",
@@ -47,17 +47,19 @@ watch(
   { immediate: true, deep: true }
 );
 
-const onSubmit = async ({ data }: FormSubmitEvent<typeof state>) => {
+const onSubmit = ({ data }: FormSubmitEvent<typeof state>) => {
   const { message } = _.cloneDeep(toRaw(data));
 
   if (!message) {
     return;
   }
 
-  await send(message);
   state.message = "";
   requestAnimationFrame(() => {
     messageInput.value?.textareaRef?.focus();
+  });
+  send(message).catch(() => {
+    state.message = message; // Revert the message input if sending fails
   });
 };
 </script>
@@ -79,9 +81,15 @@ const onSubmit = async ({ data }: FormSubmitEvent<typeof state>) => {
               :key="message.id"
               :message="message"
               :header="index === group.messages.length - 1"
+              @read="read(message)"
             />
           </ul>
         </li>
+
+        <div v-if="loadingMore" class="flex flex-col items-end gap-1">
+          <USkeleton class="h-8 w-[70%] max-w-70 rounded-lg" />
+          <USkeleton class="h-8 w-[60%] max-w-60 rounded-lg" />
+        </div>
 
         <div
           v-if="!groups.length || loading"

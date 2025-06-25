@@ -98,7 +98,12 @@ export class ChatService {
       `Found ${result.totalItems} messages for ticket ${ticketId}`,
     );
 
-    return result.map((message) => ChatMessageResponseDto.create(message));
+    return result.map((message) =>
+      ChatMessageResponseDto.create({
+        ...message,
+        ticketId: ticket.id,
+      }),
+    );
   }
 
   async sendMessage(
@@ -130,7 +135,10 @@ export class ChatService {
 
       await manager.save(message);
 
-      const response = ChatMessageResponseDto.create(message);
+      const response = ChatMessageResponseDto.create({
+        ...message,
+        ticketId: ticket.id,
+      });
 
       this.gateway.server
         .to(this.getRoom(ticketId))
@@ -141,7 +149,10 @@ export class ChatService {
     });
   }
 
-  async readMessages(client: ApiSocket, eventDto: ChatMessageReadEventDto) {
+  async readMessages(
+    client: ApiSocket,
+    eventDto: ChatMessageReadEventDto,
+  ): Promise<ChatMessageReadEventDto> {
     const { user: reader } = client.auth;
     this.logger.log(
       `Marking messages as read by ${reader.id} for ticket ${eventDto.ticketId}`,
@@ -182,10 +193,13 @@ export class ChatService {
       this.logger.log(
         `No unread messages found for ticket ${ticketId} to mark as read by ${reader.id}`,
       );
-      return;
+      return ChatMessageReadEventDto.create({
+        ticketId,
+        messageIds: [],
+      });
     }
 
-    await this.ds.transaction(async (manager) => {
+    return this.ds.transaction(async (manager) => {
       await manager.update(
         Message,
         {
@@ -196,16 +210,17 @@ export class ChatService {
         },
       );
 
+      const response = ChatMessageReadEventDto.create({
+        ticketId,
+        messageIds: filteredIds,
+      });
+
       this.gateway.server
         .to(this.getRoom(ticketId))
         .except(client.id) // Exclude the reader from receiving their own read event
-        .emit(
-          ChatEvents.MESSAGE_READ,
-          ChatMessageReadEventDto.create({
-            ticketId,
-            messageIds: filteredIds,
-          }),
-        );
+        .emit(ChatEvents.MESSAGE_READ, response);
+
+      return response;
     });
   }
 }

@@ -28,6 +28,6 @@ declare module "./core.event" {
     [ChatEvents.LEAVE_SERVER]: never;
     [ChatEvents.MESSAGE_CLIENT]: IMessageResponse;
     [ChatEvents.MESSAGE_SERVER]: [IChatMessageServerEvent, IMessageResponse];
-    [ChatEvents.MESSAGE_READ]: IChatMessageReadEvent;
+    [ChatEvents.MESSAGE_READ]: [IChatMessageReadEvent, IChatMessageReadEvent];
   }
 }
