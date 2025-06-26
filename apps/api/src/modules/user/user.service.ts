@@ -351,7 +351,7 @@ export class UserService {
     }
 
     user.resetPasswordToken = generateHexToken(RESET_PASSWORD_TOKEN_LENGTH);
-    user.resetPasswordExpires = new Date(Date.now() + ms('1h'));
+    user.resetPasswordExpires = new Date(Date.now() + ms('2h'));
 
     await this.ds.transaction(async (manager) => {
       await manager.save(user);
