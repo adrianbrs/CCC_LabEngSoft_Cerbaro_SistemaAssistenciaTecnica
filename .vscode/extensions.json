@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "ms-azuretools.vscode-containers",
+    "cweijan.vscode-database-client2",
+    "ms-vscode-remote.remote-containers",
+    "irongeek.vscode-env",
+    "dbaeumer.vscode-eslint",
+    "antfu.goto-alias",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "gruntfuggly.todo-tree",
+    "vitest.explorer",
+    "vue.volar"
+  ]
+}
