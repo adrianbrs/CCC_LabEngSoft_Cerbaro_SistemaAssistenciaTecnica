@@ -24,8 +24,13 @@ import { UserInternalUpdateDto } from './dtos/user-internal-update.dto';
 import { UserQueryDto } from './dtos/user-query.dto';
 import { Paginated } from '@/shared/pagination';
 import { CannotUpdateOwnRoleError } from './errors/cannot-update-own-role.error';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { ExpiredPwdResetToken } from './errors/expired-pwd-reset-token.error';
+import { RequestPasswordResetDto } from './dtos/request-password-reset.dto';
+import * as ms from 'ms';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
+const RESET_PASSWORD_TOKEN_LENGTH = 32;
 
 @Injectable()
 export class UserService {
@@ -75,24 +80,6 @@ export class UserService {
       data: {
         name: user.name,
         verification_url: url.toString(),
-      },
-    });
-  }
-
-  async sendTicketAssignedEmail(user: User) {
-    return this.sendTemplateEmail(user, 'ticket_assigned', {
-      subject: Messages.user.email.newTicketAssignSubject,
-      data: {
-        name: user.name,
-      },
-    });
-  }
-
-  async sendTicketUpdateEmail(user: User) {
-    return this.sendTemplateEmail(user, 'ticket_updated', {
-      subject: Messages.user.email.ticketUpdatedSubject,
-      data: {
-        name: user.name,
       },
     });
   }
@@ -335,5 +322,70 @@ export class UserService {
     this.logger.log(`Found ${result.totalItems} users`, query);
 
     return result;
+  }
+
+  async requestPasswordReset(dto: RequestPasswordResetDto): Promise<void> {
+    const user = await User.findOne({
+      where: {
+        email: dto.email,
+      },
+    });
+
+    if (!user) {
+      // Do not disclose if the email exists or not
+      return;
+    }
+
+    user.resetPasswordToken = generateHexToken(RESET_PASSWORD_TOKEN_LENGTH);
+    user.resetPasswordExpires = new Date(Date.now() + ms('1h'));
+
+    await this.ds.transaction(async (manager) => {
+      await manager.save(user);
+
+      const url = new URL(Config.frontend.passwordResetPath, FRONTEND_URL);
+      url.searchParams.set('user', user.id);
+      url.searchParams.set('token', user.resetPasswordToken!);
+
+      await this.sendTemplateEmail(user, 'forgot_password', {
+        subject: Messages.user.email.passwordResetSubject,
+        data: {
+          name: user.name,
+          reset_url: url.toString(),
+          expires_at: user.resetPasswordExpires!.toISOString(),
+        },
+      });
+
+      this.logger.log(`Sent reset password email to user ${user.id}`);
+    });
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+    const user = await User.findOneOrFail({
+      where: {
+        id: dto.userId,
+      },
+    });
+
+    if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+      this.logger.warn(
+        `Invalid or expired reset password token for user ${user.id}`,
+      );
+      throw new ExpiredPwdResetToken();
+    }
+
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    user.password = await User.hashPassword(dto.password);
+
+    await this.ds.transaction(async (manager) => {
+      await manager.save(user);
+
+      await this.sendTemplateEmail(user, 'password_changed', {
+        subject: Messages.user.email.passwordChangedSubject,
+        data: {
+          name: user.name,
+        },
+      });
+    });
   }
 }
