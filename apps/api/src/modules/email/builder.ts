@@ -32,6 +32,7 @@ export class EmailBuilder<
   T extends AbstractEmailTemplate = AbstractEmailTemplate,
 > {
   private readonly message = {} as MailgunMessageData;
+  private _template: T;
 
   constructor(private readonly service: MailgunService) {}
 
@@ -46,6 +47,7 @@ export class EmailBuilder<
   }
 
   template(template: T): this {
+    this._template = template;
     this.message.template = template.name;
     this.message['h:X-Mailgun-Variables'] = JSON.stringify(template.variables);
     return this;
@@ -74,10 +76,10 @@ export class EmailBuilder<
   build(): MailgunMessageData {
     const data = { ...this.message };
 
-    if (data.subject && typeof data['h:X-Mailgun-Variables'] === 'object') {
+    if (data.subject && this._template) {
       data.subject = replaceMustacheVariables(
         data.subject,
-        data['h:X-Mailgun-Variables'],
+        this._template.variables,
       );
     }
 

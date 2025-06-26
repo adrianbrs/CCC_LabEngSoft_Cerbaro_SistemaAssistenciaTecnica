@@ -1,5 +1,9 @@
-import { MailgunMessageData, MailgunService } from '@/lib/mailgun';
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { User } from './models/user.entity';
 import { AccountAlreadyVerifiedError } from './errors/account-already-verified.error';
 import { MissingVerificationTokenError } from './errors/missing-verification-token.error';
@@ -7,11 +11,7 @@ import { UserRegisterDto } from './dtos/user-register.dto';
 import { Address } from '../address/models/address.entity';
 import { isAuthorized, UserRole } from '@musat/core';
 import { DataSource, ILike } from 'typeorm';
-import {
-  generateHexToken,
-  replaceMustacheVariables,
-  safeCompareStrings,
-} from '@/shared/utils';
+import { generateHexToken, safeCompareStrings } from '@/shared/utils';
 import { FRONTEND_URL } from '@/constants/env';
 import { Config } from '@/constants/config';
 import { InvalidCredentialsError } from './errors/invalid-credentials.error';
@@ -31,39 +31,30 @@ import * as ms from 'ms';
 import { EmailService } from '../email/email.service';
 import { PasswordRecoveryEmail } from './email/password-recovery-email';
 import { PasswordChangedEmail } from './email/password-changed-email';
+import { AccountVerificationEmail } from './email/account-verification-email';
+import { AccountReactivationEmail } from './email/account-reactivation-email';
+import { AccountDeactivationEmail } from './email/account-deactivation-email';
+import { AccountRoleChangedEmail } from './email/account-role-changed-email';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 const RESET_PASSWORD_TOKEN_LENGTH = 32;
+const ROLE_NAME_MAP = new Map<UserRole, string>([
+  [UserRole.CLIENT, 'Cliente'],
+  [UserRole.TECHNICIAN, 'Técnico'],
+  [UserRole.ADMIN, 'Administrator'],
+]);
 
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
 
   constructor(
-    private readonly mailgun: MailgunService,
     private readonly ds: DataSource,
     private readonly email: EmailService,
   ) {}
 
-  async sendEmail(user: User, data: MailgunMessageData) {
-    return this.mailgun.send({
-      to: `${user.name} <${user.email}>`,
-      ...data,
-    });
-  }
-
-  async sendTemplateEmail(
-    user: User,
-    template: string,
-    options: { subject?: string; data: object },
-  ) {
-    return this.sendEmail(user, {
-      template,
-      'h:X-Mailgun-Variables': JSON.stringify(options.data),
-      ...(options.subject && {
-        subject: replaceMustacheVariables(options.subject, options.data),
-      }),
-    });
+  getRoleName(role: UserRole): string {
+    return ROLE_NAME_MAP.get(role) || 'Desconhecido';
   }
 
   async sendVerificationEmail(user: User) {
@@ -79,22 +70,16 @@ export class UserService {
     url.searchParams.set('user', user.id);
     url.searchParams.set('token', user.verificationToken);
 
-    return this.sendTemplateEmail(user, 'verify_email', {
-      subject: Messages.user.email.accountVerificationSubject,
-      data: {
-        name: user.name,
-        verification_url: url.toString(),
-      },
-    });
-  }
-
-  async sendRoleChangedEmail(user: User) {
-    return this.sendTemplateEmail(user, 'role_changed', {
-      subject: Messages.user.email.roleChangeSubject,
-      data: {
-        name: user.name,
-      },
-    });
+    await this.email
+      .to(user)
+      .template(
+        AccountVerificationEmail.create({
+          name: user.name,
+          verificationUrl: url.toString(),
+        }),
+      )
+      .subject(Messages.user.email.accountVerificationSubject)
+      .send();
   }
 
   async verify(userId: string, token: string): Promise<User> {
@@ -177,12 +162,15 @@ export class UserService {
         user.deletedAt = null;
         await manager.save(user);
 
-        await this.sendTemplateEmail(user, 'account_reactivation_notice', {
-          subject: Messages.user.email.accountReactivationSubject,
-          data: {
-            name: user.name,
-          },
-        });
+        await this.email
+          .to(user)
+          .template(
+            AccountReactivationEmail.create({
+              name: user.name,
+            }),
+          )
+          .subject(Messages.user.email.accountReactivationSubject)
+          .send();
       });
     }
 
@@ -275,7 +263,15 @@ export class UserService {
       });
 
       await manager.save(user);
-      await this.sendRoleChangedEmail(user);
+      await this.email
+        .to(user)
+        .template(
+          AccountRoleChangedEmail.create({
+            name: user.name,
+            role: this.getRoleName(user.role),
+          }),
+        )
+        .send();
     });
 
     this.logger.log(`Role for user ${userId} updated to ${user.role}`);
@@ -295,12 +291,15 @@ export class UserService {
       }
 
       await manager.softRemove(user);
-      await this.sendTemplateEmail(user, 'account_deactivation_notice', {
-        subject: Messages.user.email.accountDeactivationSubject,
-        data: {
-          name: user.name,
-        },
-      });
+      await this.email
+        .to(user)
+        .template(
+          AccountDeactivationEmail.create({
+            name: user.name,
+          }),
+        )
+        .subject(Messages.user.email.accountDeactivationSubject)
+        .send();
 
       this.logger.log(`User ${user.id} deactivated`);
     });
@@ -385,11 +384,22 @@ export class UserService {
       },
     });
 
-    if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+    if (
+      !user.resetPasswordToken ||
+      !user.resetPasswordExpires ||
+      user.resetPasswordExpires < new Date()
+    ) {
       this.logger.warn(
         `Invalid or expired reset password token for user ${user.id}`,
       );
       throw new ExpiredPasswordResetToken();
+    }
+
+    if (!safeCompareStrings(user.resetPasswordToken, dto.token)) {
+      this.logger.warn(`Invalid reset password token for user ${user.id}`, {
+        token: dto.token,
+      });
+      throw new ForbiddenException();
     }
 
     user.resetPasswordToken = null;
