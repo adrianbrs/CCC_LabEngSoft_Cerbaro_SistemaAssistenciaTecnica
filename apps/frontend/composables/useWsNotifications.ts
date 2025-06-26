@@ -1,5 +1,5 @@
 import type {
-  IMessageQuery,
+  INotificationQuery,
   INotificationReadEvent,
   INotificationResponse,
   IPaginatedEntity,
@@ -18,7 +18,7 @@ export function useWsNotifications(options?: UseWsNotificationsOptions) {
   const { ws, emitAsync } = useWs();
   const api = useApiQuery<
     IPaginatedEntity<INotificationResponse>,
-    IMessageQuery
+    INotificationQuery
   >("/notifications/me", {
     lazy: true,
     query: () => ({

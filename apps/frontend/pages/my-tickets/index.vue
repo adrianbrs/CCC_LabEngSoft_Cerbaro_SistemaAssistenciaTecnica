@@ -1,11 +1,9 @@
 <script setup lang="tsx">
-import { TicketStatusBadge } from "#components";
 import type {
   IPaginatedEntity,
   ITicketEntity,
   ITicketQuery,
 } from "@musat/core";
-import type { TableColumn } from "@nuxt/ui";
 
 definePageMeta({
   name: "my-tickets",
@@ -16,47 +14,7 @@ const { query, refresh } = useApiQuery<
   IPaginatedEntity<ITicketEntity>,
   ITicketQuery
 >("/tickets/user");
-const { action, setAction, clearAction } = useCrudActions();
-const dfns = useDateFns();
-
-const columns: TableColumn<ITicketEntity>[] = [
-  {
-    accessorKey: "ticketNumber",
-    header: "#",
-  },
-  {
-    accessorFn: (row) => row.product.model,
-    header: "Produto",
-  },
-  {
-    accessorFn: (row) => row.product.brand.name,
-    header: "Marca",
-  },
-  {
-    accessorKey: "serialNumber",
-    header: "N. Série",
-  },
-  {
-    accessorFn: (row) => row.product.category.name,
-    header: "Categoria",
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <TicketStatusBadge status={row.original.status} size="md" />
-    ),
-  },
-  {
-    accessorFn: (row) => row.technician.name,
-    header: "Técnico",
-  },
-  {
-    accessorFn: (row) =>
-      row.closedAt ? dfns.formatDateTime(row.closedAt) : "--",
-    header: "Fechado em",
-  },
-];
+const { action, setAction, clearAction } = useCrudActions<ITicketEntity>();
 
 const onCreate = (ticket: ITicketEntity) => {
   refresh();
@@ -113,11 +71,7 @@ const onCreate = (ticket: ITicketEntity) => {
         </FilterGroup>
       </template>
 
-      <ResourceTable
-        :columns="columns"
-        @select="router.push(uri`/my-tickets/${$event.id}`)"
-      />
-
+      <TicketClientTable />
       <ResourcePagination />
 
       <TicketCreateFormModal

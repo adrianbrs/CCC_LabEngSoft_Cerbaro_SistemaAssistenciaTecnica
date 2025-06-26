@@ -54,9 +54,9 @@ const {
         <UButton
           v-for="(action, i) in actions"
           :key="`${action.label || action.icon}-${i}`"
-          v-bind="action"
           variant="ghost"
           color="primary"
+          v-bind="action"
         />
       </div>
     </slot>
