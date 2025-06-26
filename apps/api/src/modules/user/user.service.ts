@@ -25,7 +25,7 @@ import { UserQueryDto } from './dtos/user-query.dto';
 import { Paginated } from '@/shared/pagination';
 import { CannotUpdateOwnRoleError } from './errors/cannot-update-own-role.error';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
-import { ExpiredPwdResetToken } from './errors/expired-pwd-reset-token.error';
+import { ExpiredPasswordResetToken } from './errors/expired-password-reset-token.error';
 import { RequestPasswordResetDto } from './dtos/request-password-reset.dto';
 import * as ms from 'ms';
 
@@ -370,7 +370,7 @@ export class UserService {
       this.logger.warn(
         `Invalid or expired reset password token for user ${user.id}`,
       );
-      throw new ExpiredPwdResetToken();
+      throw new ExpiredPasswordResetToken();
     }
 
     user.resetPasswordToken = null;

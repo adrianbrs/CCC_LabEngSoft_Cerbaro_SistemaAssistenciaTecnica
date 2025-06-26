@@ -1,7 +1,7 @@
-import { ApiError } from '@/shared/api.error';
+import { ApiError } from '@/shared/errors';
 import { HttpStatus } from '@nestjs/common';
 
-export class ExpiredPwdResetToken extends ApiError {
+export class ExpiredPasswordResetToken extends ApiError {
   constructor() {
     super(
       'EXPIRED_PASSWORD_RESET_TOKEN',
