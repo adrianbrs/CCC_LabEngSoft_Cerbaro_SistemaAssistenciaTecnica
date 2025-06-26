@@ -161,7 +161,7 @@ const onSubmit = async ({
           />
         </UFormField>
 
-        <ULink to="/account/recover" class="text-sm">Esqueceu a senha?</ULink>
+        <ULink to="/account/recovery" class="text-sm">Esqueceu a senha?</ULink>
       </div>
 
       <div class="flex gap-4 items-center mt-8">

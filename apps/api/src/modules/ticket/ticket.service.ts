@@ -283,8 +283,6 @@ export class TicketService {
         `Ticket ${ticket.id} created and assigned to technician ${technician.id}`,
       );
 
-      await this.userService.sendTicketAssignedEmail(technician);
-
       await this.notificationService.createOne({
         title: 'Nova solicitação',
         content: `Você possui uma nova solicitação assignada #${ticket.ticketNumber}.`,
@@ -410,8 +408,6 @@ export class TicketService {
           },
         });
       }
-
-      await this.userService.sendTicketUpdateEmail(ticket.client);
 
       const response = TicketResponseDto.create(await manager.save(ticket));
 

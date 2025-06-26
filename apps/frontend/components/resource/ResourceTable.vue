@@ -186,7 +186,7 @@ const slottedColumns = computed(() => {
       <div v-else class="px-6 flex flex-col items-center justify-center gap-4">
         <slot name="empty" :status="status">
           <EmptyState
-            v-if="query.isDirty"
+            v-if="query.isDirty.value"
             icon="i-fluent-box-search-24-regular"
             title="Não encontramos nada"
             description="Tente limpar os filtros ou redefinir a pesquisa."
@@ -210,9 +210,9 @@ const slottedColumns = computed(() => {
             description="Parece que não há nada para mostrar no momento."
             :actions="[
               {
-                label: 'Tentar novamente',
+                label: 'Atualizar',
                 icon: 'i-lucide-refresh-ccw',
-                variant: 'outline',
+                variant: 'link',
                 size: 'md',
                 color: 'neutral',
                 class: 'cursor-pointer',

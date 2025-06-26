@@ -15,6 +15,7 @@ import { ReviewModule } from './modules/review/review.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { NotificationModule } from './modules/notification/notification.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { NotificationModule } from './modules/notification/notification.module';
     NotificationModule,
     SharedModule,
     ChatModule,
+    EmailModule,
   ],
   providers: [
     // Global serializer interceptor

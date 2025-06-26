@@ -19,6 +19,8 @@ import { UserDeactivateDto } from './dtos/user-deactivate.dto';
 import { UserRole } from '@musat/core';
 import { UserInternalUpdateDto } from './dtos/user-internal-update.dto';
 import { UserQueryDto } from './dtos/user-query.dto';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { RequestPasswordResetDto } from './dtos/request-password-reset.dto';
 
 @Controller('users')
 export class UserController {
@@ -26,7 +28,7 @@ export class UserController {
 
   @Get()
   @Authorize(UserRole.ADMIN)
-  async getAll(@Query() query: UserQueryDto) {
+  getAll(@Query() query: UserQueryDto) {
     return this.userService.getAll(query);
   }
 
@@ -96,5 +98,20 @@ export class UserController {
   @Get(':id')
   async getOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.getOne(id);
+  }
+
+  @Post('password/forgot')
+  @Public()
+  async forgotPassword(@Body() dto: RequestPasswordResetDto) {
+    return this.userService.requestPasswordReset(dto);
+  }
+
+  @Post(':id/password/reset')
+  @Public()
+  async resetPassword(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @Body() dto: ResetPasswordDto,
+  ) {
+    return this.userService.resetPassword(userId, dto);
   }
 }
