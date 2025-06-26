@@ -106,9 +106,12 @@ export class UserController {
     return this.userService.requestPasswordReset(dto);
   }
 
-  @Post('password/reset')
+  @Post(':id/password/reset')
   @Public()
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.userService.resetPassword(dto);
+  async resetPassword(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @Body() dto: ResetPasswordDto,
+  ) {
+    return this.userService.resetPassword(userId, dto);
   }
 }

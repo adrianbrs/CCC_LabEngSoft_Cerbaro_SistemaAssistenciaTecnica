@@ -1,20 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsString,
-  IsStrongPassword,
-  IsUUID,
-} from 'class-validator';
-import { User } from '../models/user.entity';
+import { IsNotEmpty, IsString, IsStrongPassword } from 'class-validator';
 
 export class ResetPasswordDto {
   @IsString()
   @IsNotEmpty()
   token: string;
-
-  @IsUUID('4')
-  @IsNotEmpty()
-  userId: User['id'];
 
   @IsString()
   @IsStrongPassword()

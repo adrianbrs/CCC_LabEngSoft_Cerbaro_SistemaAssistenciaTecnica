@@ -6,6 +6,7 @@ import {
 } from "@musat/core";
 import type {
   AccountDeactivateFormData,
+  AccountPasswordResetFormData,
   AccountUpdateFormData,
 } from "~/utils/schema/account.schema";
 import type { FetchOptions } from "ofetch";
@@ -83,6 +84,27 @@ export const useUserSession = <T extends boolean>(required?: T) => {
     await logout(true);
   };
 
+  const recover = async (email: string) => {
+    await $api("/users/password/forgot", {
+      credentials: "include",
+      method: "POST",
+      body: {
+        email,
+      },
+    });
+  };
+
+  const reset = async (
+    userId: IUserEntity["id"],
+    data: AccountPasswordResetFormData
+  ) => {
+    await $api(uri`/users/${userId}/password/reset`, {
+      credentials: "include",
+      method: "POST",
+      body: data,
+    });
+  };
+
   const hasRole = (role: UserRole | UserRole[]) =>
     user.value && isAuthorized(user.value, role);
 
@@ -110,6 +132,8 @@ export const useUserSession = <T extends boolean>(required?: T) => {
     hasRole,
     update,
     deactivate,
+    recover,
+    reset,
     isLoggedIn,
   };
 };

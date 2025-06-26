@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { AddressSchema } from "./address.schema";
 
+export const AccountPasswordSchema = z
+  .string()
+  .nonempty("A senha é obrigatória")
+  .refine((value) => isStrongPassword(value), {
+    message: "A senha não é forte o suficiente",
+  });
+
 export const AccountCreateSchema = z.object({
   name: z
     .string()
@@ -24,12 +31,7 @@ export const AccountCreateSchema = z.object({
     .refine((value) => value.length >= 10, {
       message: "Número de telefone inválido",
     }),
-  password: z
-    .string()
-    .nonempty("A senha é obrigatória")
-    .refine((value) => isStrongPassword(value), {
-      message: "A senha não é forte o suficiente",
-    }),
+  password: AccountPasswordSchema,
   address: AddressSchema,
 });
 
@@ -57,9 +59,10 @@ export const AccountUpdateSchema = AccountCreateSchema.omit({
 
 export type AccountUpdateFormData = z.output<typeof AccountUpdateSchema>;
 
-export const AccountPasswordUpdateSchema = AccountCreateSchema.pick({
-  password: true,
-})
+export const AccountPasswordUpdateSchema = z
+  .object({
+    password: AccountPasswordSchema,
+  })
   .extend({
     passwordConfirmation: z.string().nonempty("Por favor, confirme sua senha"),
   })
@@ -82,4 +85,13 @@ export const AccountDeactivateSchema = z.object({
 
 export type AccountDeactivateFormData = z.output<
   typeof AccountDeactivateSchema
+>;
+
+export const AccountPasswordResetSchema = z.object({
+  token: z.string().nonempty("O token é obrigatório"),
+  password: AccountPasswordSchema,
+});
+
+export type AccountPasswordResetFormData = z.output<
+  typeof AccountPasswordResetSchema
 >;

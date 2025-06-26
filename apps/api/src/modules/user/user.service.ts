@@ -28,6 +28,9 @@ import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { ExpiredPasswordResetToken } from './errors/expired-password-reset-token.error';
 import { RequestPasswordResetDto } from './dtos/request-password-reset.dto';
 import * as ms from 'ms';
+import { EmailService } from '../email/email.service';
+import { PasswordRecoveryEmail } from './email/password-recovery-email';
+import { PasswordChangedEmail } from './email/password-changed-email';
 
 const VERIFICATION_TOKEN_LENGTH = 16;
 const RESET_PASSWORD_TOKEN_LENGTH = 32;
@@ -39,6 +42,7 @@ export class UserService {
   constructor(
     private readonly mailgun: MailgunService,
     private readonly ds: DataSource,
+    private readonly email: EmailService,
   ) {}
 
   async sendEmail(user: User, data: MailgunMessageData) {
@@ -223,6 +227,17 @@ export class UserService {
 
       await manager.save(user);
 
+      if (password) {
+        await this.email
+          .to(user)
+          .template(
+            PasswordChangedEmail.create({
+              name: user.name,
+            }),
+          )
+          .send();
+      }
+
       this.logger.log(`User ${user.id} updated`);
 
       return user;
@@ -346,23 +361,27 @@ export class UserService {
       url.searchParams.set('user', user.id);
       url.searchParams.set('token', user.resetPasswordToken!);
 
-      await this.sendTemplateEmail(user, 'forgot_password', {
-        subject: Messages.user.email.passwordResetSubject,
-        data: {
-          name: user.name,
-          reset_url: url.toString(),
-          expires_at: user.resetPasswordExpires!.toISOString(),
-        },
-      });
+      await this.email
+        .to(user)
+        .template(
+          PasswordRecoveryEmail.create({
+            name: user.name,
+            resetUrl: url.toString(),
+          }),
+        )
+        .send();
 
       this.logger.log(`Sent reset password email to user ${user.id}`);
     });
   }
 
-  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+  async resetPassword(
+    userId: User['id'],
+    dto: ResetPasswordDto,
+  ): Promise<void> {
     const user = await User.findOneOrFail({
       where: {
-        id: dto.userId,
+        id: userId,
       },
     });
 
@@ -380,12 +399,14 @@ export class UserService {
     await this.ds.transaction(async (manager) => {
       await manager.save(user);
 
-      await this.sendTemplateEmail(user, 'password_changed', {
-        subject: Messages.user.email.passwordChangedSubject,
-        data: {
-          name: user.name,
-        },
-      });
+      await this.email
+        .to(user)
+        .template(
+          PasswordChangedEmail.create({
+            name: user.name,
+          }),
+        )
+        .send();
     });
   }
 }
